@@ -1,13 +1,15 @@
 package com.example.bankcards.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
+@AllArgsConstructor
 @Table(name = "users")
 public class User {
     @Id
@@ -16,8 +18,10 @@ public class User {
     private long id;
     @Column(name = "username")
     private String userName;
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private Role Role;
-    @OneToMany
-    private List<Cart> carts;
+    private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Card> cards;
 }
