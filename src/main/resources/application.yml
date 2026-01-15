@@ -1,8 +1,82 @@
-#
-# application.yml — главный конфигурационный файл Spring Boot.
+# Основные настройки приложения
+spring:
+  application:
+    name: bank-card
 
-Что нужно сделать:
-  - Указать настройки подключения к базе данных.
-  - Указать порт приложения.
-  - Настроить параметры безопасности и JWT.
-  - Включить Swagger UI.
+  # Настройки базы данных PostgreSQL
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # Настройки JPA
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Только валидация схемы, создание через Liquibase
+    show-sql: ${SHOW_SQL}
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+
+  # Настройки Liquibase
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/changelog-master.yml
+    drop-first: false
+
+  # Конфигурация шифрования для Jasypt (для шифрования номеров карт)
+  jasypt:
+    encryptor:
+      bean: jasyptStringEncryptor
+      password: ${JASYPT_ENCRYPTOR_PASSWORD}
+
+# Настройки JWT
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}  # 24 часа в миллисекундах
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}  # 7 дней
+
+# Настройки безопасности
+security:
+  allowed-origins: ${ALLOWED_ORIGINS}
+  admin-default-password: ${ADMIN_DEFAULT_PASSWORD}
+  user-default-password: ${USER_DEFAULT_PASSWORD}
+
+# Настройки Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED}
+  packages-to-scan: com.bank.controller
+
+# Настройки логирования
+logging:
+  level:
+    com.bank: ${LOG_LEVEL}
+    org.springframework.security: ${SECURITY_LOG_LEVEL}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL}
+    logging:
+      level:
+        org:
+          liquibase: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Настройки сервера
+server:
+  port: ${SERVER_PORT}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
