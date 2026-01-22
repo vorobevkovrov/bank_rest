@@ -1,4 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/migration/001-initial-schema.yml
-     # relativeToChangelogFile: true
