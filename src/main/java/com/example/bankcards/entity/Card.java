@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Getter
 @Setter
+@Builder
 @Entity
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
@@ -21,17 +23,32 @@ public class Card {
     @Column(name = "card_number_encrypted")
     private String cardNumber;
 
+    @Column(name = "card_number_last_four")
+    private String cardNumberLastFour;
+
     @Column(name = "expiry_date")
-    private Date expiredDate;
+    private Date expiryDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private Status status;
+    private CardStatus status;
 
     @Column(name = "balance")
     private BigDecimal balance;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")  // указываем имя колонки в таблице cards
+    @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "holder_name", nullable = false)
+    private String cardHolderName;
+
+    public boolean isActive() {
+        return status == CardStatus.ACTIVE;
+    }
+
+    public boolean isBlocked() {
+        return status == CardStatus.BLOCKED;
+    }
 }
+

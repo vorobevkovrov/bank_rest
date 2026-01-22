@@ -1,6 +1,7 @@
 package com.example.bankcards.config;
 
-import com.example.bankcards.service.UserDetailsServiceImpl;
+import com.example.bankcards.security.UserDetailsServiceImpl;
+import com.example.bankcards.util.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,7 +62,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception ex) {
             log.error("Failed to set user authentication in security context", ex);
         }
-
         filterChain.doFilter(request, response);
     }
 
@@ -71,7 +71,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-
         return null;
     }
 
@@ -80,12 +79,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         // Не фильтруем публичные endpoints
-        return path.startsWith("/api/auth/") ||
+        return path.startsWith("/api/v1/auth/") ||
                 path.startsWith("/swagger-ui/") ||
                 path.startsWith("/v3/api-docs/") ||
                 path.startsWith("/api-docs/") ||
                 path.equals("/actuator/health");
     }
-
-
 }

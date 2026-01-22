@@ -10,7 +10,7 @@ import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.service.AuthenticationService;
-import com.example.bankcards.config.JwtService;
+import com.example.bankcards.util.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,8 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/api/v1/auth")
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "API для аутентификации и регистрации")
 public class AuthenticationController {
 
