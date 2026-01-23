@@ -117,6 +117,7 @@ public class CardServiceImpl implements CardService {
             log.info("Card {} status changed to: {}", cardId, request.getStatus());
         }
         return null;
+        // TODO здесь закончил
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+//TODO читаемая ошибка на протухший токен
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -63,7 +64,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Failed")
-                .message("Validation errors occurred")
+                .message("Validation errors occurred " + ex.getMessage())
                 .path(getCurrentPath(request))
                 .build();
 
