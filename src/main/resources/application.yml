@@ -42,6 +42,8 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}  # 24 часа в миллисекундах
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}  # 7 дней
+encryption:
+  key: ${ENCRYPTION_KEY}
 
 # Настройки безопасности
 security:
@@ -50,13 +52,25 @@ security:
   user-default-password: ${USER_DEFAULT_PASSWORD}
 
 # Настройки Swagger/OpenAPI
+#springdoc:
+#  api-docs:
+#   path: /api-docs
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    enabled: ${SWAGGER_ENABLED}
+#  packages-to-scan: com.bank.controller
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
     enabled: ${SWAGGER_ENABLED}
-  packages-to-scan: com.bank.controller
+    url: /api-docs
+    doc-expansion: none
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  show-actuator: true
 
 # Настройки логирования
 logging:
