@@ -2,9 +2,11 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.dto.request.CardCreateRequest;
 import com.example.bankcards.dto.request.CardUpdateRequest;
+import com.example.bankcards.dto.response.BalanceResponse;
 import com.example.bankcards.dto.response.CardResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface CardService {
 
@@ -18,6 +20,8 @@ public interface CardService {
     CardResponse blockCard(Long cardId);
 
     CardResponse activateCard(Long cardId);
+
+    BalanceResponse getCardBalance(Long cardId, UserDetails currentUser);
 
     // Просмотр карт (для админа и пользователя)
     CardResponse getCardById(Long cardId);

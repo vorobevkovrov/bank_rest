@@ -2,8 +2,10 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.request.CardCreateRequest;
 import com.example.bankcards.dto.request.CardUpdateRequest;
+import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.service.CardService;
+import com.example.bankcards.service.impl.CardRequestServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,18 +22,23 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/admin/cards")
 @RequiredArgsConstructor
 @Tag(
         name = "Администрирование карт",
         description = "API для управления банковскими картами администраторами"
 )
+@RequestMapping("/api/v1/admin/cards")
 public class AdminCardController {
-
+    private final CardRequestServiceImpl cardRequestService;
     private final CardService cardService;
 
     @Operation(
@@ -311,5 +318,36 @@ public class AdminCardController {
     ) {
         Page<CardResponse> cards = cardService.getCardsByUserId(userId, pageable);
         return ResponseEntity.ok(cards);
+    }
+
+    @Operation(summary = "Получить все ожидающие запросы")
+    @GetMapping("/pending")
+    public ResponseEntity<List<CardRequestResponse>> getPendingRequests(
+            @AuthenticationPrincipal UserDetails adminDetails) {
+        List<CardRequestResponse> cardRequestResponses = cardRequestService
+                .getAllPendingRequest(adminDetails.getUsername());
+        return ResponseEntity.ok().body(cardRequestResponses);
+    }
+
+    @Operation(summary = "Одобрить запрос на блокировку")
+    @PatchMapping("/{requestId}/approve")
+    public ResponseEntity<CardRequestResponse> approveRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails adminDetails
+    ) {
+        CardRequestResponse response = cardRequestService.approveBlockRequest(
+                requestId, adminDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Отклонить запрос на блокировку")
+    @PatchMapping("/{requestId}/reject")
+    public ResponseEntity<CardRequestResponse> rejectRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails adminDetails
+    ) {
+        CardRequestResponse response = cardRequestService.rejectBlockRequest(
+                requestId, adminDetails.getUsername());
+        return ResponseEntity.ok(response);
     }
 }

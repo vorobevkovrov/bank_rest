@@ -28,7 +28,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
 
     // Для пользователя
-    Page<Card> findByUser(User user, Pageable pageable);
 
     Optional<Card> findByIdAndUser(Long id, User user);
 

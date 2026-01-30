@@ -1,16 +1,19 @@
-package com.example.bankcards.service;
+package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.request.CardCreateRequest;
 import com.example.bankcards.dto.request.CardUpdateRequest;
+import com.example.bankcards.dto.response.BalanceResponse;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.CardStatus;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.CardException;
 import com.example.bankcards.exception.ResourceNotFoundException;
+import com.example.bankcards.exception.UnauthorizedAccessException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 
+import com.example.bankcards.service.CardService;
 import com.example.bankcards.util.CardMapper;
 import com.example.bankcards.util.EncryptionService;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
@@ -87,6 +90,60 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public BalanceResponse getCardBalance(Long cardId, UserDetails currentUser) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
+        checkAccessRights(card, currentUser);
+        return BalanceResponse.builder()
+                .balance(card.getBalance())
+                .cardNumber(encryptionService.decrypt(card.getCardNumber()))
+                .holderName(card.getCardHolderName())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public CardResponse updateCard(Long cardId, CardUpdateRequest request) {
+        log.info("Updating card ID: {}", cardId);
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
+
+        log.info("Found card: ID={}, Status={}, User={}",
+                card.getId(), card.getStatus(), card.getUser().getId());
+
+        boolean updated = false;
+        // 3. Обновляем поля, если они предоставлены
+        if (request.getExpiryDate() != null) {
+            card.setExpiryDate(request.getExpiryDate());
+            updated = true;
+            log.info("Updated expiry date to: {}", request.getExpiryDate());
+        }
+
+        if (request.getStatus() != null) {
+            card.setStatus(request.getStatus());
+            updated = true;
+            log.info("Updated status from {} to {}", card.getStatus(), request.getStatus());
+        }
+
+        if (request.getBalance() != null) {
+            card.setBalance(request.getBalance());
+            updated = true;
+            log.info("Updated balance from {} to {}", card.getBalance(), request.getBalance());
+        }
+
+        // 4. Сохраняем только если были изменения
+        if (updated) {
+            card = cardRepository.save(card);
+            log.info("Card updated successfully: ID={}", card.getId());
+        } else {
+            log.info("No changes detected for card ID: {}", cardId);
+        }
+        // 5. Возвращаем обновленную карту
+        return cardMapper.cardToCardResponse(card);
+    }
+
+    @Override
     @Transactional
     public void deleteCard(Long cardId) {
         log.info("Deleting card ID: {}", cardId);
@@ -94,31 +151,10 @@ public class CardServiceImpl implements CardService {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
 
-        // Проверяем баланс
-        if (card.getBalance().compareTo(BigDecimal.ZERO) > 0) {
-            throw new CardException("Cannot delete card with positive balance");
-        }
-
         cardRepository.delete(card);
         log.info("Card deleted successfully: ID={}", cardId);
     }
 
-    @Override
-    @Transactional
-    public CardResponse updateCard(Long cardId, CardUpdateRequest request) {
-        log.info("Updating card ID: {}", cardId);
-
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
-
-        // Обновляем статус
-        if (request.getStatus() != null) {
-            card.setStatus(request.getStatus());
-            log.info("Card {} status changed to: {}", cardId, request.getStatus());
-        }
-        return null;
-        // TODO здесь закончил
-    }
 
     @Override
     @Transactional
@@ -165,7 +201,6 @@ public class CardServiceImpl implements CardService {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
-
         return cardRepository.findByUserId(userId, pageable)
                 .map(cardMapper::cardToCardResponse);
     }
@@ -178,8 +213,9 @@ public class CardServiceImpl implements CardService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        return cardRepository.findByUser(user, pageable)
-                .map(cardMapper::cardToCardResponse);
+//        return cardRepository.findByUser(user, pageable)
+//                .map(cardMapper::cardToCardResponse);
+        return null;
     }
 
     @Override
@@ -193,6 +229,7 @@ public class CardServiceImpl implements CardService {
 
         return cardMapper.cardToCardResponse(card);
     }
+
 
     @Override
     @Transactional
@@ -232,6 +269,7 @@ public class CardServiceImpl implements CardService {
         });
     }
 
+
     // Вспомогательные методы
     private String generateCardNumber() {
         // Генерация 16-значного номера карты (Luhn-совместимого)
@@ -266,5 +304,29 @@ public class CardServiceImpl implements CardService {
             alternate = !alternate;
         }
         return (10 - (sum % 10)) % 10;
+    }
+
+    private void checkAccessRights(Card card, UserDetails currentUser) {
+        // Проверяем, является ли пользователь ADMIN
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (isAdmin) {
+            log.debug("Admin access granted for card ID: {}", card.getId());
+            return; // ADMIN имеет доступ ко всем картам
+        }
+
+        // Проверяем, является ли пользователь владельцем карты
+        User cardOwner = card.getUser();
+        String currentUsername = currentUser.getUsername();
+
+        if (!cardOwner.getUsername().equals(currentUsername)) {
+            log.warn("Unauthorized access attempt: user={}, card owner={}",
+                    currentUsername, cardOwner.getUsername());
+            throw new UnauthorizedAccessException(
+                    "You don't have permission to access this card ");
+        }
+
+        log.debug("User access granted for card ID: {}", card.getId());
     }
 }

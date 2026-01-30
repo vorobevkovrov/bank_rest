@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "API для аутентификации и регистрации")
 public class AuthenticationController {
-
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
 
@@ -50,7 +49,7 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> refreshToken(
             @RequestHeader("Authorization") String refreshToken
     ) {
-        // Убираем "Bearer " префикс если есть
+        // Убираем "Bearer" префикс если есть
         if (refreshToken.startsWith("Bearer ")) {
             refreshToken = refreshToken.substring(7);
         }
@@ -85,13 +84,14 @@ public class AuthenticationController {
     ) {
         String username = jwtService.extractUsername(token.replace("Bearer ", ""));
         User user = authenticationService.findByUsername(username);
-
         // Очищаем пароль перед отправкой
         user.setPassword(null);
-
         return ResponseEntity.ok(user);
     }
 
+    // TODO 2026-01-26 16:55:04 [http-nio-8080-exec-8] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver -
+//  Resolved [org.springframework.http.converter.HttpMessageNotWritableException:
+//  Could not write JSON: Infinite recursion (StackOverflowError)]
     @Operation(summary = "Выход из системы")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(

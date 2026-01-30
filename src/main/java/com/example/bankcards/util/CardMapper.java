@@ -1,6 +1,7 @@
 package com.example.bankcards.util;
 
 import com.example.bankcards.dto.request.CardCreateRequest;
+import com.example.bankcards.dto.request.CardUpdateRequest;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
@@ -28,8 +29,15 @@ public interface CardMapper {
     @Mapping(target = "status", source = "status")
     @Mapping(target = "balance", source = "balance")
     @Mapping(target = "userId", source = "user.id")
-    //@Mapping(target = "holderName", source = "user.username")
+        //@Mapping(target = "holderName", source = "user.username")
     CardResponse cardToCardResponse(Card card);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "expiryDate", source = "expiryDate")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "balance", source = "balance")
+    //@Mapping(target = "userId", source = "user.id")
+    Card cardUpdateRequestToCardResponse(CardUpdateRequest cardUpdateRequest);
 
     // Преобразование LocalDate -> Date
     default Date map(LocalDate localDate) {

@@ -1,6 +1,7 @@
 package com.example.bankcards.util;
 
 import com.example.bankcards.dto.request.CardCreateRequest;
+import com.example.bankcards.dto.request.CardUpdateRequest;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-01-23T12:39:43+0300",
+    date = "2026-01-27T14:52:45+0300",
     comments = "version: 1.6.3, compiler: javac, environment: Java 17.0.11 (Oracle Corporation)"
 )
 @Component
@@ -52,6 +53,21 @@ public class CardMapperImpl implements CardMapper {
         setMaskedNumber( cardResponse, card );
 
         return cardResponse;
+    }
+
+    @Override
+    public Card cardUpdateRequestToCardResponse(CardUpdateRequest cardUpdateRequest) {
+        if ( cardUpdateRequest == null ) {
+            return null;
+        }
+
+        Card.CardBuilder card = Card.builder();
+
+        card.expiryDate( cardUpdateRequest.getExpiryDate() );
+        card.status( cardUpdateRequest.getStatus() );
+        card.balance( cardUpdateRequest.getBalance() );
+
+        return card.build();
     }
 
     private Long cardUserId(Card card) {
