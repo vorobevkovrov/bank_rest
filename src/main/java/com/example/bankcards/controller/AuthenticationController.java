@@ -89,9 +89,6 @@ public class AuthenticationController {
         return ResponseEntity.ok(user);
     }
 
-    // TODO 2026-01-26 16:55:04 [http-nio-8080-exec-8] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver -
-//  Resolved [org.springframework.http.converter.HttpMessageNotWritableException:
-//  Could not write JSON: Infinite recursion (StackOverflowError)]
     @Operation(summary = "Выход из системы")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(

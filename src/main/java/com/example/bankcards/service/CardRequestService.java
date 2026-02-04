@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.dto.request.BlockCardRequest;
 import com.example.bankcards.dto.response.CardRequestResponse;
+import com.example.bankcards.util.CardMapper;
 
 import java.util.List;
 
