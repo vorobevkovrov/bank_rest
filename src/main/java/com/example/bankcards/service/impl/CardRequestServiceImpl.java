@@ -3,8 +3,10 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.request.BlockCardRequest;
 import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.entity.*;
+import com.example.bankcards.exception.CardNotActiveException;
 import com.example.bankcards.exception.DuplicateRequestException;
 import com.example.bankcards.exception.ResourceNotFoundException;
+import com.example.bankcards.exception.SameCardTransferException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.CardRequestRepository;
 import com.example.bankcards.repository.UserRepository;
@@ -33,14 +35,14 @@ public class CardRequestServiceImpl implements CardRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found"));
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!card.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("This is not your card");
+            throw new SameCardTransferException("This is not your card");
         }
 
         if (card.isBlocked()) {
-            throw new RuntimeException("Card is already blocked");
+            throw new CardNotActiveException("Card is already blocked");
         }
 
         boolean hasPendingRequest = cardRequestRepository.existsByCardAndStatus(
@@ -76,7 +78,7 @@ public class CardRequestServiceImpl implements CardRequestService {
         log.info("Admin {} approving block request {}", adminUsername, requestId);
 
         CardRequest cardRequest = cardRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
 
         if (cardRequest.getStatus() != CardRequestStatus.PENDING) {
             throw new RuntimeException("Request is not pending");
@@ -108,7 +110,7 @@ public class CardRequestServiceImpl implements CardRequestService {
         cardRequest.setStatus(CardRequestStatus.REJECTED);
 
         cardRequestRepository.save(cardRequest);
-
+        log.info("Admin {} rejected block request {}", adminUsername, requestId);
         return CardRequestResponse.builder()
                 .requestId(cardRequest.getId())
                 .cardId(cardRequest.getCard().getId())

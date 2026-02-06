@@ -4,14 +4,13 @@ import com.example.bankcards.entity.CardStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Date;
 
 @Data
 public class CardResponse {
-    // "**** **** **** 1234"
     private String maskedNumber;
     private String holderName;
-    private LocalDate expiryDate;
+    private Date expiryDate;
     private CardStatus status;
     private BigDecimal balance;
     private Long userId;

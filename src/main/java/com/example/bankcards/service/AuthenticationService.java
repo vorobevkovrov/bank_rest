@@ -112,23 +112,16 @@ public class AuthenticationService {
         String username = jwtService.extractUsername(refreshToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         try {
-            // Извлекаем username из токена
-
-
             if (username == null) {
                 throw new RuntimeException("Invalid refresh token");
             }
-
-            // Находим пользователя
             var user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Проверяем валидность refresh token
             if (!jwtService.isTokenValid(refreshToken, userDetails)) {
                 throw new RuntimeException("Invalid refresh token");
             }
 
-            // Генерируем новый access token
             var newAccessToken = jwtService.generateToken(user);
 
             return AuthenticationResponse.builder()
@@ -146,7 +139,7 @@ public class AuthenticationService {
         }
     }
 
-    // Метод для создания администратора (без проверок)
+
     public AuthenticationResponse createAdmin(RegisterRequest request) {
         log.warn("⚠️  Создание администратора с незашифрованным паролем!");
 
@@ -171,7 +164,6 @@ public class AuthenticationService {
                 .build();
     }
 
-    // Простая проверка пароля (для учебных целей)
     public boolean validatePassword(String username, String password) {
         return userRepository.findByUsername(username)
                 .map(user -> user.getPassword().equals(password))

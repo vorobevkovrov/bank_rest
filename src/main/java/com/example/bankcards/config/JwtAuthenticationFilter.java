@@ -202,8 +202,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Удаление префикса "Bearer" (7 символов)
             return bearerToken.substring(7);
         }
-        return null;
-        // TODO null bad
+        return "Invalid token format";
+
     }
 
     /**

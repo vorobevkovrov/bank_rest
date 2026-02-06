@@ -6,7 +6,6 @@ import com.example.bankcards.dto.response.BalanceResponse;
 import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.dto.response.TransferResponse;
-import com.example.bankcards.entity.Card;
 import com.example.bankcards.service.CardRequestService;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.TransactionService;
@@ -14,6 +13,7 @@ import com.example.bankcards.util.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,111 +24,113 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "User Card Management", description = "Operations related to user's cards management")
+@Tag(name = "Управление картами пользователя", description = "Операции для управления картами пользователей")
 @SecurityRequirement(name = "Bearer Authentication")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('ROLE_USER')")
 @RestController
 @RequestMapping("/api/v1/cards")
 public class UserCardController {
+
+    private static final int DEFAULT_PAGE_SIZE = 20;
+
     private final CardService cardService;
     private final JwtService jwtService;
     private final TransactionService transactionService;
     private final CardRequestService cardRequestService;
 
-    /**
-     * Retrieve the authenticated user's cards with pagination and optional search.
-     *
-     * @param request  HTTP request containing the JWT token in the `Authorization` header
-     * @param pageable Spring `Pageable` object defining page size and sort order
-     * @return `Page<CardResponse>` containing the card information
-     */
     @Operation(
-            summary = "Get all user's cards",
-            description = "Retrieve paginated list of user's cards with sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successfully retrieved cards"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized")
-            }
+            summary = "Получить все карты пользователя",
+            description = "Получение списка всех карт текущего пользователя с пагинацией"
     )
-    @GetMapping("/all")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<CardResponse>> getAllCards(@Parameter(hidden = true) HttpServletRequest request,
-                                                          @PageableDefault(size = 20,
-                                                                  sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("public void GetAllCards user");
-        String authorizationHeader = request.getHeader("Authorization");
-        Page<CardResponse> cards = cardService.getCardsByUserId(jwtService.extractUserId(authorizationHeader.
-                substring(7)), pageable);
-        return ResponseEntity.status(HttpStatus.FOUND).body(cards);
-    }
-
-    @Operation(
-            summary = "Get card balance",
-            description = "Retrieve balance for specific card",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successfully retrieved balance"),
-                    @ApiResponse(responseCode = "403", description = "Access forbidden"),
-                    @ApiResponse(responseCode = "404", description = "Card not found")
-            }
-    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список карт успешно получен"),
+            @ApiResponse(responseCode = "401", description = "Пользователь не авторизован")
+    })
+    @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/{cardId}/balance")
-    public ResponseEntity<BalanceResponse> getBalance(@Parameter(description = "Card ID") @PathVariable Long cardId,
-                                                      @AuthenticationPrincipal UserDetails userDetails) {
-        log.info("public void getBalance(Card card) {}", cardId);
-        return ResponseEntity.status(HttpStatus.FOUND).body(cardService.getCardBalance(cardId, userDetails));
+    public ResponseEntity<Page<CardResponse>> getMyCards(
+            @Parameter(hidden = true) HttpServletRequest request,
+            @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "id", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        String authorizationHeader = request.getHeader("Authorization");
+        Long userId = jwtService.extractUserId(authorizationHeader.substring(7));
+
+        log.info("Пользователь с ID {} запрашивает список своих карт", userId);
+        Page<CardResponse> cards = cardService.getCardsByUserId(userId, pageable);
+        return ResponseEntity.ok(cards);
     }
 
     @Operation(
-            summary = "Block card",
-            description = "Request to block user's card",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Card blocked successfully"),
-                    @ApiResponse(responseCode = "400", description = "Invalid request"),
-                    @ApiResponse(responseCode = "403", description = "Access forbidden")
-            }
+            summary = "Получить баланс карты",
+            description = "Получение текущего баланса конкретной карты пользователя"
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Баланс успешно получен"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещен"),
+            @ApiResponse(responseCode = "404", description = "Карта не найдена")
+    })
+    @GetMapping("/{cardId}/balance")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<BalanceResponse> getCardBalance(
+            @Parameter(description = "ID карты") @PathVariable Long cardId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        log.info("Пользователь {} запрашивает баланс карты с ID: {}",
+                userDetails.getUsername(), cardId);
+        BalanceResponse balance = cardService.getCardBalance(cardId, userDetails);
+        return ResponseEntity.ok(balance);
+    }
 
+    @Operation(
+            summary = "Запросить блокировку карты",
+            description = "Создание запроса на блокировку карты пользователем"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Запрос на блокировку успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Неверные параметры запроса"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещен")
+    })
     @PostMapping("/block")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CardRequestResponse> requestCardBlock(
+            @Parameter(description = "Данные для запроса блокировки")
             @Valid @RequestBody BlockCardRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
+        log.info("Пользователь {} создает запрос на блокировку карты.}",
+                userDetails.getUsername());
         CardRequestResponse response = cardRequestService.requestCardBlock(
                 request, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 
     @Operation(
-            summary = "Transfer between cards",
-            description = "Transfer funds between user's own cards",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Transfer successful"),
-                    @ApiResponse(responseCode = "400", description = "Invalid transfer request"),
-                    @ApiResponse(responseCode = "403", description = "Access forbidden")
-            }
+            summary = "Перевод между своими картами",
+            description = "Перевод средств между картами, принадлежащими одному пользователю"
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Перевод успешно выполнен"),
+            @ApiResponse(responseCode = "400", description = "Неверные параметры запроса"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещен")
+    })
     @PostMapping("/transfer")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TransferResponse> transferBetweenOwnCards(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Transfer request details",
-                    required = true
-            )
+            @Parameter(description = "Данные для перевода")
             @Valid @RequestBody TransferRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
+        log.info("Пользователь {} выполняет перевод {} с карты {} на карту {}",
+                userDetails.getUsername(), request.getAmount(),
+                request.getFromCardId(), request.getToCardId());
         TransferResponse response = transactionService.transferBetweenOwnCards(request, userDetails);
         return ResponseEntity.ok(response);
     }

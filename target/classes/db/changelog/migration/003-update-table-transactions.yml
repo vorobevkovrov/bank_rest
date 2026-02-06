@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-1-update-table-transactions
+      author: maxim vorobev
+      runAlways: false
+      changes:
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: status
+                  type: varchar (20)
+                  constraints:
+                    nullable: false

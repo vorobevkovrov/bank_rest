@@ -12,20 +12,17 @@ import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.exception.UnauthorizedAccessException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
-
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.util.CardMapper;
 import com.example.bankcards.util.EncryptionService;
+import com.example.bankcards.util.GenerateCardNumber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 
 @Service
@@ -36,10 +33,10 @@ public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final EncryptionService encryptionService;
     private final CardMapper cardMapper;
-    private static final String CARD_NUMBER_PREFIX = "4000"; // Visa prefix для примера
+    private final GenerateCardNumber generateCardNumber;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CardResponse createCard(CardCreateRequest request) {
         log.info("Creating card for user ID: {}", request.getUserId());
 
@@ -47,7 +44,7 @@ public class CardServiceImpl implements CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
 
         // Генерируем номер карты
-        String cardNumber = generateCardNumber();
+        String cardNumber = generateCardNumber.generateCardNumber();
         String lastFourDigits = cardNumber.substring(cardNumber.length() - 4);
 
         // Проверяем уникальность последних 4 цифр для пользователя
@@ -55,25 +52,28 @@ public class CardServiceImpl implements CardService {
             throw new CardException("Card with similar last four digits already exists for this user");
         }
 
-        // Создаем карту
-        CardCreateRequest card = CardCreateRequest.builder()
-                .userId(user.getId())
-                .cardNumberEncrypted(encryptionService.encrypt(cardNumber))
+        // Создаем сущность Card из запроса
+        Card card = Card.builder()
+                .user(user)
+                .cardNumber(encryptionService.encrypt(cardNumber))
                 .cardNumberLastFour(lastFourDigits)
                 .expiryDate(request.getExpiryDate())
                 .cardHolderName(request.getCardHolderName().toUpperCase())
-                .initialBalance(request.getInitialBalance())
-                .cardStatus(CardStatus.CREATED)
+                .balance(request.getInitialBalance())
+                .status(CardStatus.CREATED)
                 .build();
-        log.info("CardCreateRequest card = CardCreateRequest.builder() {} {} {} {}", card.getUserId(),
-                card.getExpiryDate(), card.getCardStatus(), card.getCardNumberEncrypted());
-        Card savedCard = cardRepository.save(cardMapper.cardRequestToCard(card));
-        log.info("Card created successfully: ID={} ", savedCard.getId());
+
+        log.info("Creating card entity: UserID={}, ExpiryDate={}, Status={}, LastFourDigits={}",
+                user.getId(), request.getExpiryDate(), CardStatus.CREATED, lastFourDigits);
+
+        Card savedCard = cardRepository.save(card);
+        log.info("Card created successfully: ID={}", savedCard.getId());
+
         return cardMapper.cardToCardResponse(savedCard);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CardResponse activateCard(Long cardId) {
         log.info("Activating card ID: {}", cardId);
 
@@ -103,7 +103,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CardResponse updateCard(Long cardId, CardUpdateRequest request) {
         log.info("Updating card ID: {}", cardId);
         Card card = cardRepository.findById(cardId)
@@ -144,7 +144,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteCard(Long cardId) {
         log.info("Deleting card ID: {}", cardId);
 
@@ -157,7 +157,7 @@ public class CardServiceImpl implements CardService {
 
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CardResponse blockCard(Long cardId) {
         log.info("Blocking card ID: {}", cardId);
 
@@ -172,8 +172,7 @@ public class CardServiceImpl implements CardService {
 
         Card blockedCard = cardRepository.save(card);
         log.info("Card blocked successfully: ID={}", cardId);
-
-        return null;
+        return cardMapper.cardToCardResponse(blockedCard);
     }
 
 
@@ -198,9 +197,10 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(readOnly = true)
     public Page<CardResponse> getCardsByUserId(Long userId, Pageable pageable) {
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
-        }
+//        if (!userRepository.existsById(userId)) {
+//            throw new ResourceNotFoundException("User not found with id: " + userId);
+//        }
+        //TODO
         return cardRepository.findByUserId(userId, pageable)
                 .map(cardMapper::cardToCardResponse);
     }
@@ -213,9 +213,8 @@ public class CardServiceImpl implements CardService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-//        return cardRepository.findByUser(user, pageable)
-//                .map(cardMapper::cardToCardResponse);
-        return null;
+        return cardRepository.findByUserId(userId, pageable)
+                .map(cardMapper::cardToCardResponse);
     }
 
     @Override
@@ -230,81 +229,6 @@ public class CardServiceImpl implements CardService {
         return cardMapper.cardToCardResponse(card);
     }
 
-
-    @Override
-    @Transactional
-    public void requestCardBlock(Long userId, Long cardId, String reason) {
-        log.info("User {} requested to block card {}", userId, cardId);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        Card card = cardRepository.findByIdAndUser(cardId, user)
-                .orElseThrow(() -> new ResourceNotFoundException("Card not found or access denied"));
-
-        if (card.isBlocked()) {
-            throw new CardException("Card is already blocked");
-        }
-
-        // Здесь можно добавить логику отправки уведомления администратору
-        // или создать запрос на блокировку в отдельной таблице
-
-        log.info("Block request for card {} by user {}: {}", cardId, userId, reason);
-        // В реальном приложении здесь была бы асинхронная обработка запроса
-    }
-
-    @Override
-    @Scheduled(cron = "0 0 0 * * ?") // Ежедневно в полночь
-    @Transactional
-    public void checkForExpiredCards() {
-        log.info("Checking for expired cards...");
-
-        LocalDate today = LocalDate.now();
-        cardRepository.findByExpiryDateBefore(today).forEach(card -> {
-            if (card.isActive()) {
-                card.setStatus(CardStatus.EXPIRED_DATE);
-                cardRepository.save(card);
-                log.info("Card {} expired and marked as EXPIRED", card.getId());
-            }
-        });
-    }
-
-
-    // Вспомогательные методы
-    private String generateCardNumber() {
-        // Генерация 16-значного номера карты (Luhn-совместимого)
-        StringBuilder cardNumber = new StringBuilder(CARD_NUMBER_PREFIX);
-
-        // Генерируем остальные 12 цифр случайно
-        for (int i = 0; i < 12; i++) {
-            cardNumber.append((int) (Math.random() * 10));
-        }
-
-        // Добавляем контрольную цифру по алгоритму Луна
-        String numberWithoutCheckDigit = cardNumber.toString();
-        int checkDigit = calculateLuhnCheckDigit(numberWithoutCheckDigit);
-        cardNumber.append(checkDigit);
-        return cardNumber.toString();
-    }
-
-    private int calculateLuhnCheckDigit(String number) {
-        int sum = 0;
-        boolean alternate = false;
-
-        for (int i = number.length() - 1; i >= 0; i--) {
-            int digit = Character.getNumericValue(number.charAt(i));
-
-            if (alternate) {
-                digit *= 2;
-                if (digit > 9) {
-                    digit = digit - 9;
-                }
-            }
-            sum += digit;
-            alternate = !alternate;
-        }
-        return (10 - (sum % 10)) % 10;
-    }
 
     private void checkAccessRights(Card card, UserDetails currentUser) {
         // Проверяем, является ли пользователь ADMIN

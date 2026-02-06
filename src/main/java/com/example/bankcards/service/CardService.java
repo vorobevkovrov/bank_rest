@@ -34,10 +34,5 @@ public interface CardService {
     Page<CardResponse> getUserCards(Long userId, Pageable pageable);
 
     CardResponse getUserCardById(Long userId, Long cardId);
-
-    void requestCardBlock(Long userId, Long cardId, String reason);
-
-    // Утилиты
-    void checkForExpiredCards();
 }
 

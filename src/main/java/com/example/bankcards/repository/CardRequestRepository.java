@@ -1,6 +1,5 @@
 package com.example.bankcards.repository;
 
-import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.CardRequest;
 import com.example.bankcards.entity.CardRequestStatus;
@@ -13,7 +12,5 @@ public interface CardRequestRepository extends JpaRepository<CardRequest, Long> 
     List<CardRequest> findByStatus(CardRequestStatus status);
 
     boolean existsByCardAndStatus(Card card, CardRequestStatus status);
-
-
 }
 

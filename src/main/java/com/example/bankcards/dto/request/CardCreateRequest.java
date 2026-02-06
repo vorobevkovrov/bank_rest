@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Date;
 
 @Data
 @Builder
@@ -22,7 +22,7 @@ public class CardCreateRequest {
 
     @NotNull(message = "Expiry date is required")
     @Future(message = "Expiry date must be in the future")
-    private  LocalDate expiryDate;
+    private Date expiryDate;
 
     @NotNull(message = "Initial balance is required")
     @DecimalMin(value = "0.00", message = "Balance cannot be negative")

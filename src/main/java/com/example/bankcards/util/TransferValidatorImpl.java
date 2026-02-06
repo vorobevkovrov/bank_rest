@@ -11,9 +11,10 @@ import java.math.BigDecimal;
 
 @Component
 @Slf4j
-public class TransferValidator {
+public class TransferValidatorImpl implements TransferValidator {
 
-    public void transferCardValidation(TransferRequest request, UserDetails currentUser, Card fromCard, Card toCard) {
+    public void transferCardValidation(TransferRequest request, UserDetails currentUser,
+                                       Card fromCard, Card toCard) {
 
         validateSameOwner(fromCard, toCard);
         validateCardOwnership(fromCard, currentUser);
