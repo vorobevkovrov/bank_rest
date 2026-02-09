@@ -1,6 +1,8 @@
 package com.example.bankcards.util;
 
+import org.springframework.stereotype.Component;
 
+@Component
 public class GenerateCardNumber {
     /**
      * Префикс номера карты для генерации.

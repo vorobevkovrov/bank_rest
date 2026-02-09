@@ -13,6 +13,25 @@ import io.swagger.v3.oas.models.info.Info;
 
 @Configuration
 public class SwaggerConfig {
+    @Bean
+    public OpenAPI customOpenAPI() {
+        // Глобальная схема bearerAuth + базовая информация о API
+        SecurityScheme bearer =
+                new SecurityScheme()
+                        .name("bearerAuth")
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT");
+
+        return new OpenAPI()
+                .info(
+                        new Info()
+                                .title("Bank API")
+                                .version("v1")
+                                .description("Bank API "))
+                .components(new Components().addSecuritySchemes("bearerAuth", bearer))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+    }
 
     @Bean
     public GroupedOpenApi publicApi() {

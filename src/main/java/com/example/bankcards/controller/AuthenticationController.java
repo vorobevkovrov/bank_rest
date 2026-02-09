@@ -1,5 +1,6 @@
 package com.example.bankcards.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -78,6 +79,7 @@ public class AuthenticationController {
     }
 
     @Operation(summary = "Получение информации о текущем пользователе")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(
             @RequestHeader("Authorization") String token
