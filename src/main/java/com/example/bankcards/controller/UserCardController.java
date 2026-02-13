@@ -31,18 +31,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Управление картами пользователя", description = "Операции для управления картами пользователей")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirement(name = "BearerAuthentication")
 @RequiredArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/cards")
 public class UserCardController {
-
     private static final int DEFAULT_PAGE_SIZE = 20;
-
     private final CardService cardService;
     private final JwtService jwtService;
-    private final TransactionService transactionService;
     private final CardRequestService cardRequestService;
 
     @Operation(
@@ -109,29 +106,6 @@ public class UserCardController {
                 userDetails.getUsername());
         CardRequestResponse response = cardRequestService.requestCardBlock(
                 request, userDetails.getUsername());
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(
-            summary = "Перевод между своими картами",
-            description = "Перевод средств между картами, принадлежащими одному пользователю"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Перевод успешно выполнен"),
-            @ApiResponse(responseCode = "400", description = "Неверные параметры запроса"),
-            @ApiResponse(responseCode = "403", description = "Доступ запрещен")
-    })
-    @PostMapping("/transfer")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TransferResponse> transferBetweenOwnCards(
-            @Parameter(description = "Данные для перевода")
-            @Valid @RequestBody TransferRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        log.info("Пользователь {} выполняет перевод {} с карты {} на карту {}",
-                userDetails.getUsername(), request.getAmount(),
-                request.getFromCardId(), request.getToCardId());
-        TransferResponse response = transactionService.transferBetweenOwnCards(request, userDetails);
         return ResponseEntity.ok(response);
     }
 }

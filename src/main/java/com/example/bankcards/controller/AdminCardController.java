@@ -35,7 +35,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirement(name = "BearerAuthentication")
 @Tag(
         name = "Администрирование карт",
         description = "API для управления банковскими картами администраторами"
@@ -142,6 +142,7 @@ public class AdminCardController {
             @ApiResponse(responseCode = "404", description = "Карта не найдена"),
             @ApiResponse(responseCode = "403", description = "Доступ запрещен")
     })
+    @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/{cardId}")
     public ResponseEntity<CardResponse> getCardById(
             @Parameter(description = "ID карты", required = true, example = "12345")
@@ -154,7 +155,7 @@ public class AdminCardController {
 
     @Operation(
             summary = "Обновить карту",
-            description = "Обновление информации о карте: статус, лимиты, данные держателя"
+            description = "Обновление информации о карте: баланс, данные держателя, срок действия"
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -210,7 +211,7 @@ public class AdminCardController {
 
     @Operation(
             summary = "Удалить карту",
-            description = "Удаление карты из системы. Карта может быть удалена только если её баланс равен нулю"
+            description = "Удаление карты из системы."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Карта успешно удалена"),
@@ -253,7 +254,7 @@ public class AdminCardController {
         return ResponseEntity.ok(cards);
     }
 
-    @Operation(summary = "Получить все ожидающие запросы")
+    @Operation(summary = "Получить все ожидающие запросы на блокировку карт (статус pending)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Список ожидающих запросов получен")
     })

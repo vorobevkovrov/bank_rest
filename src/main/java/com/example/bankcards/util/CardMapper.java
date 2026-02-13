@@ -14,10 +14,10 @@ import java.util.Date;
 @Mapper(componentModel = "spring")
 public interface CardMapper {
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "cardNumber", source = "cardNumberEncrypted")
-    @Mapping(target = "cardNumberLastFour", source = "cardNumberLastFour")
+//    @Mapping(target = "cardNumber", source = "cardNumberEncrypted")
+//    @Mapping(target = "cardNumberLastFour", source = "cardNumberLastFour")
     @Mapping(target = "expiryDate", source = "expiryDate")
-    @Mapping(target = "status", source = "cardStatus")
+//    @Mapping(target = "status", source = "cardStatus")
     @Mapping(target = "balance", source = "initialBalance")
     @Mapping(target = "user", source = "userId")
     @Mapping(target = "cardHolderName", source = "cardHolderName")

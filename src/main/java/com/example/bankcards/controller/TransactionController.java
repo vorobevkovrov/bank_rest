@@ -19,7 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Управление транзакциями", description = "API для работы с финансовыми транзакциями")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirement(name = "BearerAuthentication")
 @RequiredArgsConstructor
 @Slf4j
 @RestController
@@ -50,5 +50,4 @@ public class TransactionController {
         TransferResponse response = transactionService.transferBetweenOwnCards(request, userDetails);
         return ResponseEntity.ok(response);
     }
-
 }

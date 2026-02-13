@@ -1,7 +1,15 @@
 package com.example.bankcards.controller;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -19,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -26,14 +35,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
+    private static final String BEARER_PREFIX = "Bearer ";
 
+    //TODO запрет на создание нового пользователя с ролью админ
     @Operation(summary = "Регистрация нового пользователя")
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
             @Valid @RequestBody RegisterRequest request
     ) {
-        // По умолчанию регистрируем как USER
-        // ADMIN может быть создан только другим ADMIN через отдельный эндпоинт
         return ResponseEntity.ok(authenticationService.register(request));
     }
 
@@ -45,48 +54,33 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.authenticate(request));
     }
 
-    @Operation(summary = "Обновление JWT токена")
-    @PostMapping("/refresh-token")
-    public ResponseEntity<AuthenticationResponse> refreshToken(
-            @RequestHeader("Authorization") String refreshToken
-    ) {
-        // Убираем "Bearer" префикс если есть
-        if (refreshToken.startsWith("Bearer ")) {
-            refreshToken = refreshToken.substring(7);
-        }
-
-        return ResponseEntity.ok(authenticationService.refreshToken(refreshToken));
-    }
-
     @Operation(summary = "Создание администратора (только для существующих админов)")
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/register/admin")
     public ResponseEntity<AuthenticationResponse> registerAdmin(
             @Valid @RequestBody RegisterRequest request,
-            @RequestHeader("Authorization") String token
+            // @RequestHeader("Authorization") String token
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // Проверяем, что текущий пользователь - ADMIN
-        String username = jwtService.extractUsername(token.replace("Bearer ", ""));
-        User currentUser = authenticationService.findByUsername(username);
+        //  String username = jwtService.extractUsername(token.replace(BEARER_PREFIX, ""));
+        // User currentUser = authenticationService.findByUsername(username);
+        User currentUser = authenticationService.findByUsername(userDetails.getUsername());
 
         if (currentUser.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Only ADMIN can create other admins");
         }
-
-        // Устанавливаем роль ADMIN для нового пользователя
         request.setRole(Role.ADMIN);
-
         return ResponseEntity.ok(authenticationService.register(request));
     }
 
     @Operation(summary = "Получение информации о текущем пользователе")
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(
-            @RequestHeader("Authorization") String token
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        String username = jwtService.extractUsername(token.replace("Bearer ", ""));
-        User user = authenticationService.findByUsername(username);
-        // Очищаем пароль перед отправкой
+        log.info("Получение информации о пользователе: {}", userDetails.getUsername());
+        User user = authenticationService.findByUsername(userDetails.getUsername());
         user.setPassword(null);
         return ResponseEntity.ok(user);
     }
@@ -96,8 +90,6 @@ public class AuthenticationController {
     public ResponseEntity<Void> logout(
             @RequestHeader("Authorization") String token
     ) {
-        // В простой реализации JWT статичен,
-        // но можно добавить token в blacklist или уменьшить срок жизни
         return ResponseEntity.ok().build();
     }
 }

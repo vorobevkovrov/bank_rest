@@ -70,18 +70,41 @@ import java.io.IOException;
  * }
  * </pre>
  *
+ * @author [Имя разработчика/команды]
+ * @version 1.0
+ * @component Spring компонент, автоматически обнаруживаемый при сканировании компонентов
  * @see OncePerRequestFilter
  * @see JwtService
  * @see UserDetailsServiceImpl
  * @see SecurityContextHolder
  * @see UsernamePasswordAuthenticationToken
- *
- * @author [Имя разработчика/команды]
- * @version 1.0
- * @since 2024-01-15
- *
- * @component Spring компонент, автоматически обнаруживаемый при сканировании компонентов
  * @see Component
+ * <p>
+ * Сервис для работы с JWT токенами.
+ * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
+ * @see JwtService#extractUsername(String)
+ * @see JwtService#isTokenValid(String, UserDetails)
+ * @see JwtService#extractUsername(String)
+ * @see JwtService#isTokenValid(String, UserDetails)
+ * @see JwtService#extractUsername(String)
+ * @see JwtService#isTokenValid(String, UserDetails)
+ * @see JwtService#extractUsername(String)
+ * @see JwtService#isTokenValid(String, UserDetails)
+ * @see JwtService#extractUsername(String)
+ * @see JwtService#isTokenValid(String, UserDetails)
+ * @since 2024-01-15
+ * <p>
+ * Сервис для работы с JWT токенами.
+ * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
+ * <p>
+ * Сервис для работы с JWT токенами.
+ * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
+ * <p>
+ * Сервис для работы с JWT токенами.
+ * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
+ * <p>
+ * Сервис для работы с JWT токенами.
+ * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
  */
 
 
@@ -106,6 +129,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtService jwtService;
+
     /**
      * Основной метод обработки фильтра для каждого HTTP запроса.
      *
@@ -137,20 +161,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
+        String path = request.getServletPath();
+        log.debug("Processing request: {}", path);
         try {
             // Извлечение JWT токена из запроса
             final String jwt = getJwtFromRequest(request);
-
+            log.debug("JWT token extracted: {}", jwt != null ? "present" : "null");
             // Проверка наличия токена и отсутствия аутентификации в контексте
             if (StringUtils.hasText(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                log.debug("No valid JWT token found");
                 // Извлечение имени пользователя из токена
                 final String username = jwtService.extractUsername(jwt);
-
+                log.debug("Username extracted from JWT: {}", username);
                 if (username != null) {
-                    // Загрузка данных пользователя
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
+                    log.debug("UserDetails loaded: {}", userDetails != null ? userDetails.getUsername() : "null");
+                    log.debug("UserDetails class: {}", userDetails != null ? userDetails.getClass().getName() : "null");
                     // Проверка валидности токена
                     if (jwtService.isTokenValid(jwt, userDetails)) {
                         // Создание объекта аутентификации
@@ -168,7 +194,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         // Установка аутентификации в контекст безопасности
                         SecurityContextHolder.getContext().setAuthentication(authToken);
-                        log.debug("Authenticated user: {}", username);
+                        log.info("Successfully authenticated user: {} with authorities: {}",
+                                username, userDetails.getAuthorities());
                     }
                 }
             }
@@ -197,13 +224,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-
+        log.debug("Authorization header: {}", bearerToken);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             // Удаление префикса "Bearer" (7 символов)
             return bearerToken.substring(7);
         }
-        return "Invalid token format";
-
+        return null;
     }
 
     /**
@@ -236,8 +262,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
-
-        return path.startsWith("/api/v1/auth/") ||      // Endpoints аутентификации
+// Исключаем только PUBLIC endpoints, НЕ требующие аутентификации
+        return path.startsWith("/api/v1/auth/login") || // Endpoints аутентификации
+           //     path.startsWith("/api/v1/auth/register/admin") ||
                 path.startsWith("/swagger-ui/") ||      // Swagger UI
                 path.startsWith("/v3/api-docs/") ||     // OpenAPI спецификация
                 path.startsWith("/api-docs/") ||        // Альтернативная документация

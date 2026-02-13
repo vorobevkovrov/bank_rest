@@ -29,10 +29,10 @@ public class CardCreateRequest {
     @DecimalMax(value = "1000000.00", message = "Balance cannot exceed 1,000,000")
     private BigDecimal initialBalance;
 
-    private String cardNumberEncrypted;
-
-    private String cardNumberLastFour;
-
-    private CardStatus cardStatus;
+//    private String cardNumberEncrypted;
+//
+//    private String cardNumberLastFour;
+//
+//    private CardStatus cardStatus;
 }
 

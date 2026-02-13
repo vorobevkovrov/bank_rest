@@ -2,7 +2,6 @@ package com.example.bankcards.dto.response;
 
 import com.example.bankcards.entity.Role;
 import lombok.Builder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
