@@ -4,8 +4,8 @@ import com.example.bankcards.dto.request.CardCreateRequest;
 import com.example.bankcards.dto.request.CardUpdateRequest;
 import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.dto.response.CardResponse;
+import com.example.bankcards.service.CardRequestService;
 import com.example.bankcards.service.CardService;
-import com.example.bankcards.service.impl.CardRequestServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,6 +31,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Контроллер для административного управления банковскими картами.
+ * <p>
+ * Предоставляет REST API для выполнения операций с картами, доступных только
+ * пользователям с ролью ADMIN. Включает создание, активацию, блокировку,
+ * обновление и удаление карт, а также управление запросами на блокировку.
+ * </p>
+ *
+ * @author Maxim Vorobev
+ * @version 1.0
+ * @since 1.0
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -42,13 +54,30 @@ import java.util.List;
 )
 @RequestMapping("/api/v1/admin/cards")
 public class AdminCardController {
-
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int USER_CARDS_PAGE_SIZE = 10;
-
-    private final CardRequestServiceImpl cardRequestService;
+    /**
+     * Сервис для работы с запросами на блокировку карт.
+     */
+    private final CardRequestService cardRequestService;
+    /**
+     * Сервис для управления банковскими картами.
+     */
     private final CardService cardService;
 
+    /**
+     * Создает новую банковскую карту для указанного пользователя.
+     * <p>
+     * Метод доступен только администраторам. После создания карта находится
+     * в неактивном состоянии и требует активации через отдельный эндпоинт.
+     * </p>
+     *
+     * @param request      данные для создания карты (номер, тип, срок действия и т.д.)
+     * @param adminDetails информация об администраторе, выполняющем операцию
+     * @return ResponseEntity с созданной картой и статусом 201 (Created)
+     * @throws com.example.bankcards.exception.ResourceNotFoundException если пользователь не найден
+     * @throws com.example.bankcards.exception.CardException             если карта с такими последними четырьмя символами уже есть у этого пользователя
+     */
     @Operation(
             summary = "Создать новую карту",
             description = "Создание новой банковской карты для пользователя"
@@ -79,7 +108,19 @@ public class AdminCardController {
         CardResponse response = cardService.createCard(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
+    /**
+     * Активирует ранее созданную карту.
+     * <p>
+     * Активация делает карту доступной для использования в операциях.
+     * Нельзя активировать уже активную или заблокированную карту.
+     * </p>
+     *
+     * @param cardId уникальный идентификатор карты
+     * @param adminDetails информация об администраторе, выполняющем операцию
+     * @return ResponseEntity с активированной картой
+     * @throws com.example.bankcards.exception.ResourceNotFoundException если карта не найдена
+     * @throws com.example.bankcards.exception.CardException если карта уже активна
+     */
     @Operation(
             summary = "Активировать карту",
             description = "Активация ранее созданной, но неактивной карты"
@@ -232,7 +273,8 @@ public class AdminCardController {
 
     @Operation(
             summary = "Получить карты пользователя",
-            description = "Получение списка всех карт, принадлежащих конкретному пользователю"
+            description = "Возвращает список всех карт, принадлежащих указанному пользователю, с поддержкой пагинации",
+            tags = {"Администрирование карт", "Пользователи"}
     )
     @ApiResponses(value = {
             @ApiResponse(

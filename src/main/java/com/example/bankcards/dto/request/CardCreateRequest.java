@@ -1,6 +1,5 @@
 package com.example.bankcards.dto.request;
 
-import com.example.bankcards.entity.CardStatus;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +17,7 @@ public class CardCreateRequest {
 
     @NotBlank(message = "Card holder name is required")
     @Size(max = 100, message = "Card holder name must be less than 100 characters")
-    private  String cardHolderName;
+    private String cardHolderName;
 
     @NotNull(message = "Expiry date is required")
     @Future(message = "Expiry date must be in the future")

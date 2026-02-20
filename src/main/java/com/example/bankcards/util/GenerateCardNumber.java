@@ -81,11 +81,9 @@ public class GenerateCardNumber {
                     digit = digit - 9;
                 }
             }
-
             sum += digit;
             doubleDigit = !doubleDigit;
         }
-
         return (10 - (sum % 10)) % 10;
     }
 }

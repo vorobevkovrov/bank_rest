@@ -197,14 +197,9 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(readOnly = true)
     public Page<CardResponse> getCardsByUserId(Long userId, Pageable pageable) {
-//        if (!userRepository.existsById(userId)) {
-//            throw new ResourceNotFoundException("User not found with id: " + userId);
-//        }
-        //TODO
         return cardRepository.findByUserId(userId, pageable)
                 .map(cardMapper::cardToCardResponse);
     }
-
 
     // Пользовательские методы
     @Override
@@ -229,6 +224,18 @@ public class CardServiceImpl implements CardService {
         return cardMapper.cardToCardResponse(card);
     }
 
+    @Override
+    public Page<CardResponse> getCardsByUserName(String userName, Pageable pageable) {
+        // Сначала находим пользователя
+        User user = userRepository.findByUsername(userName)
+                .orElseThrow(() -> new ResourceNotFoundException("Username not found: " + userName));
+
+        // Ищем карты по ID пользователя, а не по имени владельца!
+        Page<CardResponse> cardResponsePage = cardRepository.findByUserId(user.getId(), pageable)
+                .map(cardMapper::cardToCardResponse);
+        log.info("User {} (ID: {}) retrieved {} cards", userName, user.getId(), cardResponsePage.getTotalElements());
+        return cardResponsePage;
+    }
 
     private void checkAccessRights(Card card, UserDetails currentUser) {
         // Проверяем, является ли пользователь ADMIN
@@ -253,4 +260,5 @@ public class CardServiceImpl implements CardService {
 
         log.debug("User access granted for card ID: {}", card.getId());
     }
+
 }

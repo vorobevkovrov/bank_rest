@@ -22,7 +22,6 @@ public class RegisterRequest {
                     " one lowercase and one uppercase letter")
     private final String password;
     private final Role role;
-
     public void setRole(Role role) {
     }
 }

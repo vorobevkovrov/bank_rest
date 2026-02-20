@@ -3,16 +3,22 @@ package com.example.bankcards.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+import java.util.Map;
+
 @Configuration
 public class SwaggerConfig {
-
-    // Единое имя security схемы - должно совпадать с тем, что в контроллерах
     private static final String SECURITY_SCHEME_NAME = "BearerAuthentication";
 
     @Bean
@@ -30,7 +36,6 @@ public class SwaggerConfig {
                                 3. Введите ваш токен
                                 4. Теперь все защищенные запросы будут автоматически содержать заголовок Authorization
                                 """))
-                // Добавляем security requirement глобально
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,
@@ -40,11 +45,47 @@ public class SwaggerConfig {
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
                                         .description("""
-                                                **Введите JWT токен '**
+                                                **Введите JWT токен**
                                                 ❌ Неправильно: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
                                                 ✅ Правильно: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
                                                 Получите токен через эндпоинт `/api/v1/auth/authenticate`
                                                 """)));
+    }
+
+    /**
+     * Кастомайзер, который переопределяет схему Pageable,
+     * чтобы в Swagger UI отображались нужные значения по умолчанию.
+     */
+    @Bean
+    public OpenApiCustomizer pageableSchemaCustomizer() {
+        return openApi -> {
+            Schema<?> pageableSchema = new Schema<Map<String, Object>>()
+                    .type("object")
+                    .description("Параметры пагинации")
+                    .addProperty("page", new IntegerSchema()
+                            .description("Номер страницы (начиная с 0)")
+                            .example(0)
+                            ._default(0))
+                    .addProperty("size", new IntegerSchema()
+                            .description("Количество элементов на странице")
+                            .example(20)
+                            ._default(20))
+                    .addProperty("sort", new ArraySchema()
+                            .items(new StringSchema())
+                            .description("Сортировка: поле,направление (например: balance,desc)")
+                            .example(List.of("balance"))
+                            ._default(List.of("balance")));
+
+            // Устанавливаем пример для всего объекта
+            pageableSchema.setExample(Map.of(
+                    "page", 0,
+                    "size", 20,
+                    "sort", List.of("balance")
+            ));
+
+            // Добавляем/заменяем схему с именем "Pageable"
+            openApi.getComponents().addSchemas("Pageable", pageableSchema);
+        };
     }
 
     @Bean
@@ -54,6 +95,7 @@ public class SwaggerConfig {
                 .displayName("🔐 Аутентификация")
                 .pathsToMatch("/api/v1/auth/**")
                 .pathsToExclude("/api/v1/auth/register/admin")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 
@@ -63,6 +105,7 @@ public class SwaggerConfig {
                 .group("admin-auth")
                 .displayName("🔐 Аутентификация (Админ)")
                 .pathsToMatch("/api/v1/auth/register/admin")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 
@@ -72,16 +115,17 @@ public class SwaggerConfig {
                 .group("admin-cards")
                 .displayName("👑 Управление картами (Админ)")
                 .pathsToMatch("/api/v1/admin/cards/**")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 
-    //TODO No operations defined in spec!
     @Bean
     public GroupedOpenApi userCardsApi() {
         return GroupedOpenApi.builder()
                 .group("user-cards")
                 .displayName("💳 Мои карты")
                 .pathsToMatch("/api/v1/user/cards/**")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 
@@ -91,6 +135,7 @@ public class SwaggerConfig {
                 .group("transactions")
                 .displayName("💰 Переводы")
                 .pathsToMatch("/api/v1/transactions/**")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 
@@ -100,6 +145,7 @@ public class SwaggerConfig {
                 .group("all")
                 .displayName("📚 Все API")
                 .pathsToMatch("/api/**")
+                .addOpenApiCustomizer(pageableSchemaCustomizer())
                 .build();
     }
 }

@@ -9,6 +9,7 @@ import java.util.Date;
 @Data
 public class CardUpdateRequest {
     private Long id;
+    private Date date;
     private Date expiryDate;
     private CardStatus status;
     private BigDecimal balance;

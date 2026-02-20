@@ -1,7 +1,12 @@
 package com.example.bankcards.config;
 
+import com.example.bankcards.exception.ErrorResponse;
+import com.example.bankcards.exception.GlobalExceptionHandler;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.util.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,13 +24,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 /**
  * Фильтр аутентификации на основе JWT (JSON Web Token) для Spring Security.
- *
- * <p>Этот фильтр перехватывает все входящие HTTP запросы и выполняет аутентификацию пользователей
+ * Этот фильтр перехватывает все входящие HTTP запросы и выполняет аутентификацию пользователей
  * на основе JWT токена, передаваемого в заголовке Authorization. Фильтр расширяет
- * {@link OncePerRequestFilter}, гарантируя однократное выполнение для каждого запроса.</p>
+ * {@link OncePerRequestFilter}, гарантируя однократное выполнение для каждого запроса.
  *
  * <h2>Основные функции:</h2>
  * <ul>
@@ -32,19 +38,29 @@ import java.io.IOException;
  *   <li>Валидация JWT токена с использованием {@link JwtService}</li>
  *   <li>Загрузка данных пользователя через {@link UserDetailsServiceImpl}</li>
  *   <li>Установка объекта аутентификации в {@link SecurityContextHolder}</li>
+ *   <li>Обработка ошибок валидации токена (истекший/невалидный токен)</li>
  *   <li>Исключение публичных endpoints из процесса аутентификации</li>
  * </ul>
  *
  * <h2>Поток обработки запроса:</h2>
  * <ol>
- *   <li>Проверка, нужно ли фильтровать текущий запрос ({@link #shouldNotFilter(HttpServletRequest)})</li>
+ *   <li>Проверка необходимости фильтрации запроса ({@link #shouldNotFilter(HttpServletRequest)})</li>
  *   <li>Извлечение JWT токена из заголовка Authorization ({@link #getJwtFromRequest(HttpServletRequest)})</li>
- *   <li>Извлечение имени пользователя из токена</li>
+ *   <li>При наличии токена - извлечение имени пользователя</li>
  *   <li>Загрузка {@link UserDetails} по имени пользователя</li>
- *   <li>Валидация токена и создание {@link UsernamePasswordAuthenticationToken}</li>
- *   <li>Установка аутентификации в {@link SecurityContextHolder}</li>
+ *   <li>Валидация токена</li>
+ *   <li>При успешной валидации - создание и установка аутентификации</li>
+ *   <li>При ошибках валидации - формирование ошибки через {@link #handleInvalidToken} или {@link #handleExpiredToken}</li>
  *   <li>Продолжение цепочки фильтров</li>
  * </ol>
+ *
+ * <h2>Обработка ошибок:</h2>
+ * <ul>
+ *   <li>{@link ExpiredJwtException} - перехватывается и обрабатывается методом {@link #handleExpiredToken},
+ *       возвращает 401 Unauthorized с информацией об истекшем токене</li>
+ *   <li>{@link JwtException} - перехватывается и обрабатывается методом {@link #handleInvalidToken},
+ *       возвращает 401 Unauthorized с информацией о невалидном токене</li>
+ * </ul>
  *
  * <h2>Формат JWT токена:</h2>
  * <pre>
@@ -53,8 +69,7 @@ import java.io.IOException;
  * </pre>
  *
  * <h2>Пример конфигурации в SecurityConfig:</h2>
- * <pre>
- * {@code
+ * <pre>{@code
  * @Configuration
  * @EnableWebSecurity
  * public class SecurityConfig {
@@ -67,61 +82,15 @@ import java.io.IOException;
  *             // остальная конфигурация
  *     }
  * }
- * }
- * </pre>
+ * }</pre>
  *
- * @author [Имя разработчика/команды]
+ * @author Maxim Vorobev
  * @version 1.0
- * @component Spring компонент, автоматически обнаруживаемый при сканировании компонентов
  * @see OncePerRequestFilter
  * @see JwtService
  * @see UserDetailsServiceImpl
  * @see SecurityContextHolder
  * @see UsernamePasswordAuthenticationToken
- * @see Component
- * <p>
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- * @since 2024-01-15
- * <p>
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- * <p>
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- * <p>
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- * <p>
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- */
-
-
-/**
- * Сервис для работы с JWT токенами.
- * <p>Используется для извлечения данных из токена и проверки его валидности.</p>
- *
- * @see JwtService#extractUsername(String)
- * @see JwtService#isTokenValid(String, UserDetails)
- */
-
-/**
- * Сервис для загрузки данных пользователя.
- * <p>Обеспечивает получение {@link UserDetails} по имени пользователя
- * для последующей аутентификации и проверки прав доступа.</p>
- *
- * @see UserDetailsServiceImpl#loadUserByUsername(String)
  */
 @Component
 @RequiredArgsConstructor
@@ -129,31 +98,40 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtService jwtService;
+    private final ObjectMapper objectMapper;
+    private final GlobalExceptionHandler exceptionHandler;
 
     /**
      * Основной метод обработки фильтра для каждого HTTP запроса.
      *
      * <p>Выполняет следующие шаги:</p>
      * <ol>
-     *   <li>Извлекает JWT токен из заголовка Authorization</li>
-     *   <li>Если токен присутствует и пользователь еще не аутентифицирован:</li>
-     *   <li>Извлекает имя пользователя из токена</li>
-     *   <li>Загружает данные пользователя из UserDetailsService</li>
-     *   <li>Проверяет валидность токена</li>
-     *   <li>Создает объект аутентификации и устанавливает его в SecurityContext</li>
+     *   <li>Извлекает JWT токен из заголовка Authorization с помощью {@link #getJwtFromRequest}</li>
+     *   <li>Если токен присутствует и пользователь еще не аутентифицирован:
+     *     <ul>
+     *       <li>Извлекает имя пользователя из токена через {@link JwtService#extractUsername}</li>
+     *       <li>Загружает данные пользователя через {@link UserDetailsServiceImpl#loadUserByUsername}</li>
+     *       <li>Проверяет валидность токена через {@link JwtService#isTokenValid}</li>
+     *       <li>При успешной проверке создает {@link UsernamePasswordAuthenticationToken}</li>
+     *       <li>Устанавливает аутентификацию в {@link SecurityContextHolder}</li>
+     *     </ul>
+     *   </li>
+     *   <li>При возникновении {@link ExpiredJwtException} вызывает {@link #handleExpiredToken}</li>
+     *   <li>При возникновении {@link JwtException} вызывает {@link #handleInvalidToken}</li>
+     *   <li>Продолжает обработку запроса следующими фильтрами</li>
      * </ol>
      *
-     * <p>Все исключения перехватываются и логируются, но не прерывают выполнение цепочки фильтров,
-     * чтобы обеспечить graceful degradation.</p>
+     * <p>В случае ошибок валидации токена выполнение цепочки прерывается (return после обработки ошибки),
+     * и клиенту возвращается соответствующий ответ с HTTP статусом 401.</p>
      *
      * @param request     HTTP запрос
      * @param response    HTTP ответ
      * @param filterChain цепочка фильтров Spring Security для продолжения обработки
      * @throws ServletException если возникает ошибка сервлета
      * @throws IOException      если возникает ошибка ввода-вывода
-     * @see OncePerRequestFilter#doFilterInternal(HttpServletRequest, HttpServletResponse, FilterChain)
-     * @see SecurityContextHolder#getContext()
-     * @see UsernamePasswordAuthenticationToken
+     * @see #getJwtFromRequest(HttpServletRequest)
+     * @see #handleExpiredToken(ExpiredJwtException, HttpServletResponse, HttpServletRequest)
+     * @see #handleInvalidToken(JwtException, HttpServletResponse, HttpServletRequest)
      */
     @Override
     protected void doFilterInternal(
@@ -176,7 +154,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (username != null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     log.debug("UserDetails loaded: {}", userDetails != null ? userDetails.getUsername() : "null");
-                    log.debug("UserDetails class: {}", userDetails != null ? userDetails.getClass().getName() : "null");
                     // Проверка валидности токена
                     if (jwtService.isTokenValid(jwt, userDetails)) {
                         // Создание объекта аутентификации
@@ -199,9 +176,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             }
-        } catch (Exception ex) {
+        } catch (ExpiredJwtException ex) {
+            handleExpiredToken(ex, response, request);
             // Логирование ошибки аутентификации без прерывания обработки запроса
-            log.error("Failed to set user authentication in security context", ex);
+            log.error("JWT Token expired {}", ex.getMessage());
+            return;
+
+        } catch (JwtException ex) {
+            handleInvalidToken(ex, response, request);
+            log.error("JWT Token invalid {}", ex.getMessage());
+            return; // Прерываем выполнение
         }
         // Продолжение обработки запроса следующими фильтрами в цепочке
         filterChain.doFilter(request, response);
@@ -213,11 +197,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * <p>Ожидает токен в формате: {@code Bearer {jwt-token}}.
      * Если заголовок отсутствует или имеет неверный формат, возвращает {@code null}.</p>
      *
+     * <p>Метод выполняет следующие проверки:</p>
+     * <ul>
+     *   <li>Наличие заголовка "Authorization"</li>
+     *   <li>Непустое значение заголовка</li>
+     *   <li>Наличие префикса "Bearer "</li>
+     * </ul>
+     *
      * @param request HTTP запрос
      * @return JWT токен без префикса "Bearer " или {@code null}, если токен отсутствует
      * @example <pre>
      * Вход:  request.getHeader("Authorization") = "Bearer eyJhbGciOiJIUzI1NiIs..."
      * Выход: "eyJhbGciOiJIUzI1NiIs..."
+     *
+     * Вход:  request.getHeader("Authorization") = null
+     * Выход: null
      * </pre>
      * @see HttpServletRequest#getHeader(String)
      * @see StringUtils#hasText(String)
@@ -241,7 +235,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      *
      * <h2>Публичные endpoints (не требуют аутентификации):</h2>
      * <ul>
-     *   <li>{@code /api/v1/auth/**} - endpoints аутентификации (логин, регистрация)</li>
+     *   <li>{@code /api/v1/auth/login} - endpoint входа в систему</li>
      *   <li>{@code /swagger-ui/**} - Swagger UI документация</li>
      *   <li>{@code /v3/api-docs/**} - OpenAPI спецификация</li>
      *   <li>{@code /api-docs/**} - альтернативный путь к документации API</li>
@@ -249,25 +243,116 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * </ul>
      *
      * @param request HTTP запрос для проверки
-     * @return {@code true} если фильтр НЕ должен обрабатывать запрос,
-     * {@code false} если фильтр должен обработать запрос
+     * @return {@code true} если фильтр НЕ должен обрабатывать запрос (публичный endpoint),
+     * {@code false} если фильтр должен обработать запрос (требуется аутентификация)
      * @example <pre>
-     * /api/v1/auth/login → true (не фильтровать)
-     * /api/v1/cards → false (фильтровать)
+     * /api/v1/auth/login    → true (не фильтровать)
+     * /api/v1/cards         → false (фильтровать)
      * /swagger-ui/index.html → true (не фильтровать)
+     * /actuator/health      → true (не фильтровать)
      * </pre>
      * @see OncePerRequestFilter#shouldNotFilter(HttpServletRequest)
-     * @see HttpServletRequest#getServletPath()
      */
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
 // Исключаем только PUBLIC endpoints, НЕ требующие аутентификации
         return path.startsWith("/api/v1/auth/login") || // Endpoints аутентификации
-           //     path.startsWith("/api/v1/auth/register/admin") ||
+                //     path.startsWith("/api/v1/auth/register/admin") ||
                 path.startsWith("/swagger-ui/") ||      // Swagger UI
                 path.startsWith("/v3/api-docs/") ||     // OpenAPI спецификация
                 path.startsWith("/api-docs/") ||        // Альтернативная документация
                 path.equals("/actuator/health");        // Health check
+    }
+
+    /**
+     * Обрабатывает случай невалидного JWT токена.
+     *
+     * <p>Формирует и отправляет HTTP ответ с статусом 401 (Unauthorized) и деталями ошибки
+     * в формате JSON. Используется для обработки любых JWT исключений, кроме {@link ExpiredJwtException}.</p>
+     *
+     * <p>Структура ответа:</p>
+     * <pre>
+     * {
+     *   "timestamp": "2024-01-15T10:30:45",
+     *   "status": 401,
+     *   "error": "Invalid token",
+     *   "message": "JWT signature does not match...",
+     *   "path": "/api/v1/cards"
+     * }
+     * </pre>
+     *
+     * @param ex       исключение JwtException с деталями ошибки
+     * @param response HTTP ответ для отправки клиенту
+     * @param request  HTTP запрос для получения информации о пути
+     * @throws IOException если возникает ошибка при записи в response
+     * @see ErrorResponse
+     * @see HttpStatus#UNAUTHORIZED
+     */
+    private void handleInvalidToken(JwtException ex,
+                                    HttpServletResponse response,
+                                    HttpServletRequest request) throws IOException {
+
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType("application/json");
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Invalid token")
+                .message(ex.getMessage())
+                .path(request.getServletPath())
+                .build();
+
+        log.error("Invalid token for path: {}", request.getServletPath());
+        response.getWriter().write(objectMapper.writeValueAsString(error));
+    }
+
+    /**
+     * Обрабатывает случай истекшего JWT токена.
+     *
+     * <p>Формирует и отправляет HTTP ответ с статусом 401 (Unauthorized) и деталями ошибки
+     * в формате JSON. Специализированная обработка для {@link ExpiredJwtException}.</p>
+     *
+     * <p>Структура ответа:</p>
+     * <pre>
+     * {
+     *   "timestamp": "2024-01-15T10:30:45",
+     *   "status": 401,
+     *   "error": "Token expired",
+     *   "message": "JWT expired at 2024-01-15T10:00:00. Current time: 2024-01-15T10:30:45",
+     *   "path": "/api/v1/cards"
+     * }
+     * </pre>
+     *
+     * <p>В отличие от {@link #handleInvalidToken}, этот метод использует специфичную
+     * информацию из {@link ExpiredJwtException}, такую как время истечения токена,
+     * для формирования более информативного сообщения об ошибке.</p>
+     *
+     * @param ex       исключение ExpiredJwtException с деталями об истекшем токене
+     * @param response HTTP ответ для отправки клиенту
+     * @param request  HTTP запрос для получения информации о пути
+     * @throws IOException если возникает ошибка при записи в response
+     * @see ExpiredJwtException
+     * @see ErrorResponse
+     * @see HttpStatus#UNAUTHORIZED
+     */
+    private void handleExpiredToken(ExpiredJwtException ex,
+                                    HttpServletResponse response,
+                                    HttpServletRequest request) throws IOException {
+
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType("application/json");
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Token expired")
+                .message(ex.getMessage())
+                .path(request.getServletPath())
+                .build();
+
+        log.error("Token expired for path: {}", request.getServletPath());
+        response.getWriter().write(objectMapper.writeValueAsString(error));
     }
 }
