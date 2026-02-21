@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-01-27T14:52:45+0300",
-    comments = "version: 1.6.3, compiler: javac, environment: Java 17.0.11 (Oracle Corporation)"
+    date = "2026-02-21T18:26:37+0300",
+    comments = "version: 1.6.3, compiler: javac, environment: Java 21.0.3 (Oracle Corporation)"
 )
 @Component
 public class CardMapperImpl implements CardMapper {
@@ -24,10 +24,7 @@ public class CardMapperImpl implements CardMapper {
 
         Card.CardBuilder card = Card.builder();
 
-        card.cardNumber( request.getCardNumberEncrypted() );
-        card.cardNumberLastFour( request.getCardNumberLastFour() );
-        card.expiryDate( map( request.getExpiryDate() ) );
-        card.status( request.getCardStatus() );
+        card.expiryDate( request.getExpiryDate() );
         card.balance( request.getInitialBalance() );
         card.user( map( request.getUserId() ) );
         card.cardHolderName( request.getCardHolderName() );
@@ -45,7 +42,7 @@ public class CardMapperImpl implements CardMapper {
 
         cardResponse.setMaskedNumber( card.getCardNumberLastFour() );
         cardResponse.setHolderName( card.getCardHolderName() );
-        cardResponse.setExpiryDate( map( card.getExpiryDate() ) );
+        cardResponse.setExpiryDate( card.getExpiryDate() );
         cardResponse.setStatus( card.getStatus() );
         cardResponse.setBalance( card.getBalance() );
         cardResponse.setUserId( cardUserId( card ) );

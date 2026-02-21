@@ -36,7 +36,7 @@ databaseChangeLog:
 
   - changeSet:
       id: 001-2-create-cards-table
-      author: system
+      author: maxim vorobev
       changes:
         - createTable:
             tableName: cards
@@ -73,7 +73,7 @@ databaseChangeLog:
               # Срок действия
               - column:
                   name: expiry_date
-                  type: DATE
+                  type: TIMESTAMP
                   constraints:
                     nullable: false
 
@@ -110,7 +110,7 @@ databaseChangeLog:
 
   - changeSet:
       id: 001-3-create-transactions-table
-      author: system
+      author: maxim vorobev
       changes:
         - createTable:
             tableName: transactions
