@@ -4,23 +4,11 @@ import com.example.bankcards.dto.request.AuthenticationRequest;
 import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.User;
-import org.springframework.stereotype.Service;
 
-@Service
-public class AuthenticationService {
-    public User findByUsername(String username) {
-        return new User();
-    }
+public interface AuthenticationService {
+    User findByUsername(String username);
 
-    public AuthenticationResponse register(RegisterRequest request) {
-        return null;
-    }
+    AuthenticationResponse register(RegisterRequest request);
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        return null;
-    }
-
-    public AuthenticationResponse refreshToken(String refreshToken) {
-        return null;
-    }
+    AuthenticationResponse authenticate(AuthenticationRequest request);
 }

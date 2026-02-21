@@ -6,3 +6,54 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+/target/ # Maven build output directory
+/build/  # Gradle build output directory
+
+# Eclipse specific files
+.project
+.classpath
+.settings/
+*.launch
+*.externalToolBuilders/
+
+# IntelliJ specific files
+.idea/
+*.iws
+*.iml
+*.ipr
+# replay_pid* # Optional, for replay agent logs
+
+# VS Code specific files
+.vscode/
+
+# NetBeans specific files
+/nbproject/private/
+/build/
+nbproject/
+*.nbattrs
+nb-configuration.xml
+
+# Operating System and miscellaneous files
+.DS_Store # macOS
+Thumbs.db # Windows
+# logs and temporary files
+logs/
+*.log
+tmp/
+*.tmp
+
+# Maven-specific files
+pom.xml.tag
+pom.xml.next
+pom.xml.bak
+pom.xml.releaseBackup
+release.properties
+dependency-info.html
+
+

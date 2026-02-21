@@ -1,25 +1,41 @@
 package com.example.bankcards.service;
 
-import com.example.bankcards.entity.Card;
-import com.example.bankcards.repository.CardRepository;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.example.bankcards.dto.request.CardCreateRequest;
+import com.example.bankcards.dto.request.CardUpdateRequest;
+import com.example.bankcards.dto.response.BalanceResponse;
+import com.example.bankcards.dto.response.CardResponse;
+import com.example.bankcards.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 
-@Service
-@AllArgsConstructor
-public class CardService {
-    private final CardRepository cardRepo;
+public interface CardService {
 
-    public void createCard() {
-    }
+    // Административные методы
+    CardResponse createCard(CardCreateRequest request);
 
-    public void activateCard(Card card) {
-       // cardRepo.activateCard(card);
-    }
+    CardResponse updateCard(Long cardId, CardUpdateRequest request);
 
-    public void blocCard() {
-    }
+    void deleteCard(Long cardId);
 
-    public void deleteCard() {
-    }
+    CardResponse blockCard(Long cardId);
+
+    CardResponse activateCard(Long cardId);
+
+    BalanceResponse getCardBalance(Long cardId, UserDetails currentUser);
+
+    // Просмотр карт (для админа и пользователя)
+    CardResponse getCardById(Long cardId);
+
+    Page<CardResponse> getAllCards(Pageable pageable);
+
+    Page<CardResponse> getCardsByUserId(Long userId, Pageable pageable);
+
+    Page<CardResponse> getCardsByUserName(String userName, Pageable pageable);
+
+    // Пользовательские методы
+    Page<CardResponse> getUserCards(Long userId, Pageable pageable);
+
+    CardResponse getUserCardById(Long userId, Long cardId);
 }
+
