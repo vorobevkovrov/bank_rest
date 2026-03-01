@@ -27,7 +27,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -218,6 +217,7 @@ class AuthenticationServiceImplTest {
             verify(jwtService).generateRefreshToken(any(User.class));
             verify(jwtService).getExpirationTime();
         }
+
         @Test
         @DisplayName("Should throw RuntimeException when user not found")
         void shouldThrowRuntimeExceptionWhenUserNotFound() {
@@ -228,14 +228,14 @@ class AuthenticationServiceImplTest {
             // Act & Assert
             assertThatThrownBy(() -> authenticationService.authenticate(authRequest))
                     .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Invalid credentials");
+                    .hasMessage("Invalid username, user with this username not found");
 
             verify(authenticationManager, never()).authenticate(any());
         }
 
         @Test
-        @DisplayName("Should throw RuntimeException when password is incorrect")
-        void shouldThrowRuntimeExceptionWhenPasswordIsIncorrect() {
+        @DisplayName("Should throw BadCredentialsException when password is incorrect")
+        void shouldThrowBadCredentialsExceptionWhenPasswordIsIncorrect() {
             // Arrange
             AuthenticationRequest wrongPasswordRequest = AuthenticationRequest.builder()
                     .username(TEST_USERNAME)
@@ -245,12 +245,20 @@ class AuthenticationServiceImplTest {
             when(userRepository.findByUsername(TEST_USERNAME))
                     .thenReturn(Optional.of(testUser));
 
-            // Act & Assert
-            assertThatThrownBy(() -> authenticationService.authenticate(wrongPasswordRequest))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Invalid credentials");
+            // Мокаем authenticationManager, чтобы он выбросил BadCredentialsException
+            doThrow(new BadCredentialsException("Bad credentials"))
+                    .when(authenticationManager)
+                    .authenticate(any(UsernamePasswordAuthenticationToken.class));
 
-            verify(authenticationManager, never()).authenticate(any());
+            // Act & Assert - Согласно текущей реализации, выбрасывается BadCredentialsException
+            assertThatThrownBy(() -> authenticationService.authenticate(wrongPasswordRequest))
+                    .isInstanceOf(BadCredentialsException.class)
+                    .hasMessage("Bad credentials");
+
+            verify(userRepository).findByUsername(TEST_USERNAME);
+            verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+            verify(jwtService, never()).generateToken(any());
+            verify(jwtService, never()).generateRefreshToken(any());
         }
     }
 
@@ -280,8 +288,6 @@ class AuthenticationServiceImplTest {
             assertThat(registerResponse).isNotNull();
             assertThat(registerResponse.accessToken()).isNotNull().isEqualTo(TEST_TOKEN);
             assertThat(registerResponse.refreshToken()).isNotNull().isEqualTo(TEST_REFRESH_TOKEN);
-            // FIX: tokenType может быть null, так как в коде не устанавливается
-            // assertThat(registerResponse.tokenType()).isNotNull(); // Убираем эту проверку
             assertThat(registerResponse.expiresIn()).isNotNull().isEqualTo(TEST_EXPIRES_IN);
             assertThat(registerResponse.username()).isNotNull().isEqualTo(TEST_USERNAME);
             assertThat(registerResponse.role()).isNotNull().isEqualTo(Role.USER);
@@ -316,8 +322,9 @@ class AuthenticationServiceImplTest {
             // Act & Assert - Теперь должно выбросить исключение при аутентификации
             assertThatThrownBy(() -> authenticationService.authenticate(emptyRequest))
                     .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Invalid credentials");
+                    .hasMessage("Authentication failed");
         }
+
 
         @Test
         @DisplayName("Should handle empty password with non-empty stored password")
@@ -332,10 +339,20 @@ class AuthenticationServiceImplTest {
             when(userRepository.findByUsername(TEST_USERNAME))
                     .thenReturn(Optional.of(testUser));
 
-            // Act & Assert - Пароли не совпадают
+            // Мокаем authenticationManager, чтобы он выбросил BadCredentialsException
+            doThrow(new BadCredentialsException("Bad credentials"))
+                    .when(authenticationManager)
+                    .authenticate(any(UsernamePasswordAuthenticationToken.class));
+
+            // Act & Assert - Согласно текущей реализации, выбрасывается BadCredentialsException
             assertThatThrownBy(() -> authenticationService.authenticate(emptyPasswordRequest))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Invalid credentials");
+                    .isInstanceOf(BadCredentialsException.class)
+                    .hasMessage("Bad credentials");
+
+            verify(userRepository).findByUsername(TEST_USERNAME);
+            verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+            verify(jwtService, never()).generateToken(any());
+            verify(jwtService, never()).generateRefreshToken(any());
         }
 
         @Test

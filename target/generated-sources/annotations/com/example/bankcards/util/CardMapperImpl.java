@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-21T18:26:37+0300",
+    date = "2026-02-24T09:50:42+0300",
     comments = "version: 1.6.3, compiler: javac, environment: Java 21.0.3 (Oracle Corporation)"
 )
 @Component
@@ -24,10 +24,10 @@ public class CardMapperImpl implements CardMapper {
 
         Card.CardBuilder card = Card.builder();
 
-        card.expiryDate( request.getExpiryDate() );
-        card.balance( request.getInitialBalance() );
-        card.user( map( request.getUserId() ) );
-        card.cardHolderName( request.getCardHolderName() );
+        card.expiryDate( request.expiryDate() );
+        card.balance( request.initialBalance() );
+        card.user( map( request.userId() ) );
+        card.cardHolderName( request.cardHolderName() );
 
         return card.build();
     }
@@ -38,18 +38,16 @@ public class CardMapperImpl implements CardMapper {
             return null;
         }
 
-        CardResponse cardResponse = new CardResponse();
+        CardResponse.CardResponseBuilder cardResponse = CardResponse.builder();
 
-        cardResponse.setMaskedNumber( card.getCardNumberLastFour() );
-        cardResponse.setHolderName( card.getCardHolderName() );
-        cardResponse.setExpiryDate( card.getExpiryDate() );
-        cardResponse.setStatus( card.getStatus() );
-        cardResponse.setBalance( card.getBalance() );
-        cardResponse.setUserId( cardUserId( card ) );
+        cardResponse.maskedNumber( card.getCardNumberLastFour() );
+        cardResponse.holderName( card.getCardHolderName() );
+        cardResponse.expiryDate( card.getExpiryDate() );
+        cardResponse.status( card.getStatus() );
+        cardResponse.balance( card.getBalance() );
+        cardResponse.userId( cardUserId( card ) );
 
-        setMaskedNumber( cardResponse, card );
-
-        return cardResponse;
+        return cardResponse.build();
     }
 
     @Override
@@ -60,9 +58,9 @@ public class CardMapperImpl implements CardMapper {
 
         Card.CardBuilder card = Card.builder();
 
-        card.expiryDate( cardUpdateRequest.getExpiryDate() );
-        card.status( cardUpdateRequest.getStatus() );
-        card.balance( cardUpdateRequest.getBalance() );
+        card.expiryDate( cardUpdateRequest.expiryDate() );
+        card.status( cardUpdateRequest.status() );
+        card.balance( cardUpdateRequest.balance() );
 
         return card.build();
     }

@@ -66,12 +66,12 @@ public interface CardMapper {
     }
 
     // Создание маскированного номера для CardResponse
-    @AfterMapping
-    default void setMaskedNumber(@MappingTarget CardResponse cardResponse, Card card) {
-        if (card.getCardNumberLastFour() != null && !card.getCardNumberLastFour().isEmpty()) {
-            cardResponse.setMaskedNumber("**** **** **** " + card.getCardNumberLastFour());
-        }
-    }
+//    @AfterMapping
+//    default void setMaskedNumber(@MappingTarget CardResponse cardResponse, Card card) {
+//        if (card.getCardNumberLastFour() != null && !card.getCardNumberLastFour().isEmpty()) {
+//            cardResponse.setMaskedNumber("**** **** **** " + card.getCardNumberLastFour());
+//        }
+//    }
 
     // Альтернативный вариант через выражение (можно использовать вместо @AfterMapping)
     @Named("maskNumber")

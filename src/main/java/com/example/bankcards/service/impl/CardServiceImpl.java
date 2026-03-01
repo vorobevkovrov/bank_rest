@@ -38,10 +38,10 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CardResponse createCard(CardCreateRequest request) {
-        log.info("Creating card for user ID: {}", request.getUserId());
+        log.info("Creating card for user ID: {}", request.userId());
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.userId()));
 
         // Генерируем номер карты
         String cardNumber = generateCardNumber.generateCardNumber();
@@ -57,14 +57,14 @@ public class CardServiceImpl implements CardService {
                 .user(user)
                 .cardNumber(encryptionService.encrypt(cardNumber))
                 .cardNumberLastFour(lastFourDigits)
-                .expiryDate(request.getExpiryDate())
-                .cardHolderName(request.getCardHolderName().toUpperCase())
-                .balance(request.getInitialBalance())
+                .expiryDate(request.expiryDate())
+                .cardHolderName(request.cardHolderName().toUpperCase())
+                .balance(request.initialBalance())
                 .status(CardStatus.CREATED)
                 .build();
 
         log.info("Creating card entity: UserID={}, ExpiryDate={}, Status={}, LastFourDigits={}",
-                user.getId(), request.getExpiryDate(), CardStatus.CREATED, lastFourDigits);
+                user.getId(), request.expiryDate(), CardStatus.CREATED, lastFourDigits);
 
         Card savedCard = cardRepository.save(card);
         log.info("Card created successfully: ID={}", savedCard.getId());
@@ -114,22 +114,22 @@ public class CardServiceImpl implements CardService {
 
         boolean updated = false;
         // 3. Обновляем поля, если они предоставлены
-        if (request.getExpiryDate() != null) {
-            card.setExpiryDate(request.getExpiryDate());
+        if (request.expiryDate() != null) {
+            card.setExpiryDate(request.expiryDate());
             updated = true;
-            log.info("Updated expiry date to: {}", request.getExpiryDate());
+            log.info("Updated expiry date to: {}", request.expiryDate());
         }
 
-        if (request.getStatus() != null) {
-            card.setStatus(request.getStatus());
+        if (request.status() != null) {
+            card.setStatus(request.status());
             updated = true;
-            log.info("Updated status from {} to {}", card.getStatus(), request.getStatus());
+            log.info("Updated status to: {}", request.status());
         }
 
-        if (request.getBalance() != null) {
-            card.setBalance(request.getBalance());
+        if (request.balance() != null) {
+            card.setBalance(request.balance());
             updated = true;
-            log.info("Updated balance from {} to {}", card.getBalance(), request.getBalance());
+            log.info("Updated balance from {} to {}", card.getBalance(), request.balance());
         }
 
         // 4. Сохраняем только если были изменения
@@ -169,7 +169,6 @@ public class CardServiceImpl implements CardService {
         }
 
         card.setStatus(CardStatus.BLOCKED);
-
         Card blockedCard = cardRepository.save(card);
         log.info("Card blocked successfully: ID={}", cardId);
         return cardMapper.cardToCardResponse(blockedCard);
@@ -199,29 +198,6 @@ public class CardServiceImpl implements CardService {
     public Page<CardResponse> getCardsByUserId(Long userId, Pageable pageable) {
         return cardRepository.findByUserId(userId, pageable)
                 .map(cardMapper::cardToCardResponse);
-    }
-
-    // Пользовательские методы
-    @Override
-    @Transactional(readOnly = true)
-    public Page<CardResponse> getUserCards(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        return cardRepository.findByUserId(userId, pageable)
-                .map(cardMapper::cardToCardResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public CardResponse getUserCardById(Long userId, Long cardId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        Card card = cardRepository.findByIdAndUser(cardId, user)
-                .orElseThrow(() -> new ResourceNotFoundException("Card not found or access denied"));
-
-        return cardMapper.cardToCardResponse(card);
     }
 
     @Override

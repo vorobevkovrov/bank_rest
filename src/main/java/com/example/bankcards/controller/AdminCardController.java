@@ -104,10 +104,11 @@ public class AdminCardController {
             @AuthenticationPrincipal UserDetails adminDetails
     ) {
         log.info("Администратор {} создает карту для пользователя: {}",
-                adminDetails.getUsername(), request.getUserId());
+                adminDetails.getUsername(), request.userId());
         CardResponse response = cardService.createCard(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+    //TODO
     /**
      * Активирует ранее созданную карту.
      * <p>

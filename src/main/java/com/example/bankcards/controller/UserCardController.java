@@ -15,11 +15,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -84,12 +82,12 @@ public class UserCardController {
             summary = "Получить все карты пользователя",
             description = """
                     Возвращает список всех карт текущего пользователя с поддержкой пагинации.
-                                    
+                    
                     **Особенности:**
                     * Возвращаются только карты, принадлежащие текущему пользователю
                     * Поддерживается сортировка по различным полям
                     * По умолчанию сортировка по ID в порядке убывания
-                                    
+                    
                     **Доступно:**
                     * Номер карты (маскированный)
                     * Тип карты
@@ -191,14 +189,14 @@ public class UserCardController {
             summary = "Запросить блокировку карты",
             description = """
                     Создает запрос на блокировку карты, который будет рассмотрен администратором.
-                                    
+                    
                     **Процесс:**
                     1. Пользователь указывает карту и причину блокировки
                     2. Система создает запрос со статусом PENDING
                     3. Администратор получает уведомление о новом запросе
                     4. После рассмотрения запрос либо одобряется (карта блокируется),
                        либо отклоняется (карта остается активной)
-                                    
+                    
                     **Важно:**
                     * Нельзя создать запрос на уже заблокированную карту
                     * Причина блокировки обязательна и должна содержать не менее 10 символов
@@ -270,7 +268,7 @@ public class UserCardController {
         CardRequestResponse response = cardRequestService.requestCardBlock(
                 request, userDetails.getUsername());
         log.info("Запрос на блокировку создан: ID={}, карта={}",
-                response.getRequestId(), response.getCardId());
+                response.requestId(), response.cardId());
         return ResponseEntity.ok(response);
     }
 }

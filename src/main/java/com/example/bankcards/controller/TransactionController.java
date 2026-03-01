@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,7 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Контроллер для управления финансовыми транзакциями между картами.
@@ -58,13 +60,13 @@ public class TransactionController {
             summary = "Перевод между своими картами",
             description = """
                     Выполняет перевод средств между картами, принадлежащими одному пользователю.
-                                    
+                    
                     **Требования:**
                     * Обе карты должны принадлежать текущему пользователю
                     * Карта-источник должна быть активна и иметь достаточный баланс
                     * Карта-назначение должна быть активна
                     * Сумма перевода должна быть положительной
-                                    
+                    
                     **Ограничения:**
                     * Нельзя переводить на ту же карту
                     * Нельзя переводить с заблокированной карты
@@ -137,10 +139,10 @@ public class TransactionController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         log.info("User {} initiating transfer of {} from card {} to card {}",
-                userDetails.getUsername(), request.getAmount(),
-                request.getFromCardId(), request.getToCardId());
+                userDetails.getUsername(), request.amount(),
+                request.fromCardId(), request.toCardId());
         TransferResponse response = transactionService.transferBetweenOwnCards(request, userDetails);
-        log.debug("Transfer completed successfully. Transaction ID: {}", response.getTransactionId());
+        log.debug("Transfer completed successfully. Transaction ID: {}", response.transactionId());
         return ResponseEntity.ok(response);
     }
 }

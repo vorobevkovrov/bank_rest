@@ -1,9 +1,6 @@
 package com.example.bankcards.controller.config;
 
-import com.example.bankcards.security.UserDetailsServiceImpl;
-import com.example.bankcards.util.JwtService;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
@@ -23,11 +20,6 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class TestSecurityConfig {
-    @MockBean
-    private UserDetailsServiceImpl userDetailsService;
-
-    @MockBean
-    private JwtService jwtService;
 
     @Bean
     @Primary
@@ -57,8 +49,10 @@ public class TestSecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/transactions/**").authenticated()
+                        .requestMatchers("/api/v1/user/**").authenticated()
                         .anyRequest().permitAll()
                 )
+
                 // Настраиваем точку входа для анонимных пользователей
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

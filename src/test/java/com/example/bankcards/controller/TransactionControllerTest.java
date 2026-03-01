@@ -4,7 +4,12 @@ import com.example.bankcards.controller.config.TestSecurityConfig;
 import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.response.TransferResponse;
 import com.example.bankcards.entity.TransactionStatus;
+import com.example.bankcards.exception.CardBlockedException;
+import com.example.bankcards.exception.InsufficientFundsException;
+import com.example.bankcards.exception.SameCardTransferException;
+import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.service.TransactionService;
+import com.example.bankcards.util.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +47,10 @@ class TransactionControllerTest {
     private TransactionService transactionService;
     private TransferRequest transferRequest;
     private TransferResponse transferResponse;
+    @MockBean
+    private UserDetailsServiceImpl userDetailsService;
+    @MockBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
@@ -99,5 +108,49 @@ class TransactionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isUnauthorized()); // Ожидаем 401
+    }
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void transfer_WithInsufficientFunds_ShouldReturnBadRequest() throws Exception {
+        when(transactionService.transferBetweenOwnCards(any(TransferRequest.class), any()))
+                .thenThrow(new InsufficientFundsException("Insufficient funds"));
+
+        mockMvc.perform(post("/api/v1/transactions/transfer/own")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(transferRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void transfer_WithSameCard_ShouldReturnBadRequest() throws Exception {
+        TransferRequest sameCardRequest = TransferRequest.builder()
+                .fromCardId(1L)
+                .toCardId(1L) // одинаковые ID
+                .amount(BigDecimal.valueOf(100.00))
+                .build();
+
+        when(transactionService.transferBetweenOwnCards(any(TransferRequest.class), any()))
+                .thenThrow(new SameCardTransferException("Cannot transfer to the same card"));
+
+        mockMvc.perform(post("/api/v1/transactions/transfer/own")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sameCardRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void transfer_WithBlockedCard_ShouldReturnConflict() throws Exception {
+        when(transactionService.transferBetweenOwnCards(any(TransferRequest.class), any()))
+                .thenThrow(new CardBlockedException("Card is blocked"));
+
+        mockMvc.perform(post("/api/v1/transactions/transfer/own")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(transferRequest)))
+                .andExpect(status().isConflict());
     }
 }

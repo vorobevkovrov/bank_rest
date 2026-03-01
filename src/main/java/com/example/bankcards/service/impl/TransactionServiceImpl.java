@@ -5,6 +5,7 @@ import com.example.bankcards.dto.response.TransferResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.entity.TransactionStatus;
+import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.TransactionRepository;
@@ -30,24 +31,27 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional()
     public TransferResponse transferBetweenOwnCards(TransferRequest request, UserDetails currentUser) {
         log.info("Transfer from card {} to card {} amount {}",
-                request.getFromCardId(), request.getToCardId(), request.getAmount());
+                request.fromCardId(), request.toCardId(), request.amount());
 
-        Card fromCard = cardRepository.findById(request.getFromCardId())
+        Card fromCard = cardRepository.findById(request.fromCardId())
                 .orElseThrow(() -> new ResourceNotFoundException("Source card not found"));
-        Card toCard = cardRepository.findById(request.getToCardId())
+        Card toCard = cardRepository.findById(request.toCardId())
                 .orElseThrow(() -> new ResourceNotFoundException("Destination card not found"));
 
         transferValidator.transferCardValidation(request, currentUser,
                 fromCard, toCard);
 
-        fromCard.setBalance(fromCard.getBalance().subtract(request.getAmount()));
-        toCard.setBalance(toCard.getBalance().add(request.getAmount()));
+        if (fromCard.getBalance().compareTo(request.amount()) < 0) {
+            throw new InsufficientFundsException("Insufficient funds on card");
+        }
+        toCard.setBalance(toCard.getBalance().add(request.amount()));
+        fromCard.setBalance(fromCard.getBalance().subtract(request.amount()));
         cardRepository.save(fromCard);
         cardRepository.save(toCard);
         Transaction transaction = Transaction.builder()
                 .fromCard(fromCard)
                 .toCard(toCard)
-                .amount(request.getAmount())
+                .amount(request.amount())
                 .status(TransactionStatus.COMPLETED)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -60,7 +64,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .transactionId(savedTransaction.getId())
                 .fromCardId(fromCard.getId())
                 .toCardId(toCard.getId())
-                .amount(request.getAmount())
+                .amount(request.amount())
                 .status(TransactionStatus.COMPLETED)
                 .timestamp(savedTransaction.getCreatedAt())
                 .message("Transfer completed successfully")

@@ -1,5 +1,7 @@
 package com.example.bankcards.service.impl;
 
+import com.example.bankcards.exception.InvalidCredentialsException;
+import com.example.bankcards.exception.UserAlreadyExistsException;
 import com.example.bankcards.service.AuthenticationService;
 import com.example.bankcards.util.JwtService;
 import com.example.bankcards.dto.request.AuthenticationRequest;
@@ -29,7 +31,7 @@ import java.util.Optional;
  * <p>ВНИМАНИЕ: Текущая реализация хранит пароли в незашифрованном виде, что является серьезной уязвимостью безопасности.
  * Необходимо использовать кодирование паролей с помощью BCryptPasswordEncoder или аналогичного механизма.</p>
  *
- * @author Пример Компании
+ * @author Maxim Vorobev
  * @version 1.0
  * @see AuthenticationService
  * @see User
@@ -75,7 +77,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      *
      * @param request запрос на регистрацию, содержащий учетные данные пользователя
      * @return ответ аутентификации с токенами доступа и обновления
-     * @throws RuntimeException если пользователь с таким именем уже существует
+     * @throws UserAlreadyExistsException если пользователь с таким именем уже существует
      * @apiNote ВНИМАНИЕ: Этот метод хранит пароли в незашифрованном виде.
      * Необходимо исправить эту уязвимость безопасности.
      */
@@ -93,21 +95,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             RegisterRequest request
     ) {
         log.warn("⚠️  Пароли хранятся в незашифрованном виде! Это небезопасно!");
-        Optional<User> existingUser = userRepository.findByUsername(request.getUsername());
+        Optional<User> existingUser = userRepository.findByUsername(request.username());
         if (existingUser.isPresent()) {
-            throw new RuntimeException("User already exists");
+            throw new UserAlreadyExistsException("User already exists");
         }
         var user = User.builder()
-                .username(request.getUsername())
-                .password(request.getPassword()) // ⚠️ Пароль в чистом виде!
-                .role(request.getRole() != null ? request.getRole() : Role.USER)
+                .username(request.username())
+                .password(request.password()) // ⚠️ Пароль в чистом виде!
+                .role(request.role() != null ? request.role() : Role.USER)
                 .build();
 
         userRepository.save(user);
         var accessToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        log.info("User registered: {}", request.getUsername());
+        log.info("User registered: {}", request.username());
 
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
@@ -125,7 +127,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      *
      * @param request запрос на аутентификацию, содержащий учетные данные
      * @return ответ аутентификации с токенами доступа и обновления
-     * @throws RuntimeException если учетные данные неверны
+     * @throws InvalidCredentialsException если учетные данные неверны
      * @apiNote ВНИМАНИЕ: Этот метод проверяет пароли в незашифрованном виде.
      * Необходимо исправить эту уязвимость безопасности.
      */
@@ -143,37 +145,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             AuthenticationRequest request
     ) {
         log.warn("⚠️  Проверка пароля в незашифрованном виде! Это небезопасно!");
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username, user with this username not found"));
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.username(), request.password())
+        );
+        var accessToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
 
-        try {
-            User user = userRepository.findByUsername(request.getUsername())
-                    .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+        log.info("User authenticated: {}", request.username());
 
-            if (!user.getPassword().equals(request.getPassword())) {
-                throw new RuntimeException("Invalid credentials");
-            }
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    user.getUsername(),
-                    user.getPassword()
-            );
-            authenticationManager.authenticate(authentication);
+        return AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(jwtService.getExpirationTime())
+                .username(user.getUsername())
+                .role(user.getRole())
+                .message("Authentication successful")
+                .build();
 
-            var accessToken = jwtService.generateToken(user);
-            var refreshToken = jwtService.generateRefreshToken(user);
-
-            log.info("User authenticated: {}", request.getUsername());
-
-            return AuthenticationResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .expiresIn(jwtService.getExpirationTime())
-                    .username(user.getUsername())
-                    .role(user.getRole())
-                    .message("Authentication successful")
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Authentication failed for user: {}", request.getUsername());
-            throw new RuntimeException("Invalid credentials");
-        }
+//        } catch (Exception e) {
+//            log.error("Authentication failed for user: {}", request.username());
+//            throw new InvalidCredentialsException("Authentication failed: " + e.getMessage());
+//        }
     }
 }

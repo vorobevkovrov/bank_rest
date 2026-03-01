@@ -1,7 +1,6 @@
 package com.example.bankcards.config;
 
 import com.example.bankcards.exception.ErrorResponse;
-import com.example.bankcards.exception.GlobalExceptionHandler;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.util.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -99,7 +98,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
-    private final GlobalExceptionHandler exceptionHandler;
 
     /**
      * Основной метод обработки фильтра для каждого HTTP запроса.

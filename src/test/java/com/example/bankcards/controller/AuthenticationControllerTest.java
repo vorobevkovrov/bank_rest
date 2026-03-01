@@ -1,11 +1,12 @@
 package com.example.bankcards.controller;
 
-import com.example.bankcards.config.JwtAuthenticationFilter;
+import com.example.bankcards.controller.config.TestSecurityConfig;
 import com.example.bankcards.dto.request.AuthenticationRequest;
 import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.UserAlreadyExistsException;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.service.AuthenticationService;
 import com.example.bankcards.util.JwtService;
@@ -15,20 +16,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+//TODO all passed
 @WebMvcTest(AuthenticationController.class)
 @ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 class AuthenticationControllerTest {
 
     @Autowired
@@ -43,12 +50,9 @@ class AuthenticationControllerTest {
     @MockBean
     private JwtService jwtService;
 
-    // Добавляем MockBean для зависимостей безопасности
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
+
 
     private RegisterRequest registerRequest;
     private AuthenticationRequest authRequest;
@@ -155,7 +159,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "testuser")
     void getCurrentUser_ShouldReturnUserWithoutPassword() throws Exception {
         when(jwtService.extractUsername(anyString()))
                 .thenReturn("testuser");
@@ -169,6 +173,44 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.password").doesNotExist());
 
         verify(authenticationService).findByUsername("testuser");
+    }
+    @Test
+    void register_WithExistingUsername_ShouldReturnConflict() throws Exception {
+        when(authenticationService.register(any(RegisterRequest.class)))
+                .thenThrow(new UserAlreadyExistsException("User already exists"));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void register_WithInvalidPassword_ShouldReturnBadRequest() throws Exception {
+        RegisterRequest invalidRequest = RegisterRequest.builder()
+                .username("testuser")
+                .password("123") // слишком короткий
+                .role(Role.USER)
+                .build();
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void authenticate_WithInvalidCredentials_ShouldReturnUnauthorized() throws Exception {
+        when(authenticationService.authenticate(any(AuthenticationRequest.class)))
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
+
+        mockMvc.perform(post("/api/v1/auth/authenticate")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

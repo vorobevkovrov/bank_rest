@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -346,9 +347,10 @@ public class GlobalExceptionHandler {
      * @see UserAlreadyExistsException
      * @see HttpStatus#CONFLICT
      */
-    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ExceptionHandler({UserAlreadyExistsException.class})
     public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex,
                                                                           HttpServletRequest request) {
+        log.error("Conflict: {}", ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
@@ -356,10 +358,52 @@ public class GlobalExceptionHandler {
                 .message(ex.getMessage())
                 .path(getCurrentPath(request))
                 .build();
-        log.error("User already exist  {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
 
     }
+
+    @ExceptionHandler(CardBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleCardBlockedException(
+            CardBlockedException ex, HttpServletRequest request) {
+        log.error("Card blocked: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientFundsException(
+            InsufficientFundsException ex, HttpServletRequest request) {
+        log.error("Insufficient funds: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(CardNotActiveException.class)
+    public ResponseEntity<ErrorResponse> handleCardNotActiveException(CardNotActiveException ex,
+                                                                      HttpServletRequest request) {
+        log.error("This card not active: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+//TODO
 
     /**
      * Обрабатывает исключение {@link ExpiredJwtException}.
@@ -380,19 +424,60 @@ public class GlobalExceptionHandler {
      * </pre>
      * @see ExpiredJwtException
      * @see HttpStatus#UNAUTHORIZED
-     * @see com.example.bankcards.security.JwtAuthenticationFilter
+     * @see com.example.bankcards.config.JwtAuthenticationFilter
      */
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, HttpServletRequest request) {
+//    @ExceptionHandler(ExpiredJwtException.class)
+//    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, HttpServletRequest request) {
+//        ErrorResponse error = ErrorResponse.builder()
+//                .timestamp(LocalDateTime.now())
+//                .status(HttpStatus.UNAUTHORIZED.value())
+//                .error("Token expired")
+//                .message(ex.getMessage())
+//                .path(getCurrentPath(request))
+//                .build();
+//        log.error("Token expired {}", ex.getMessage());
+//        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+//    }
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
+            ExpiredJwtException ex, HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Token expired")
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Invalid username or password")
                 .message(ex.getMessage())
                 .path(getCurrentPath(request))
                 .build();
-        log.error("Token expired {}", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        log.error("Invalid username or password {}", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex,
+                                                                       HttpServletRequest request) {
+        log.error("Bad credentials: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message("Invalid username or password")
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler({SameCardTransferException.class})
+    public ResponseEntity<ErrorResponse> handleSameCardTransferException(SameCardTransferException ex,
+                                                                         HttpServletRequest request) {
+        log.error("Same card transfer attempt: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     /**

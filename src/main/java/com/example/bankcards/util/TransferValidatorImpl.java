@@ -19,7 +19,7 @@ public class TransferValidatorImpl implements TransferValidator {
         validateSameOwner(fromCard, toCard);
         validateCardOwnership(fromCard, currentUser);
         validateNotSameCard(fromCard, toCard);
-        validateSufficientFunds(fromCard, request.getAmount());
+        validateSufficientFunds(fromCard, request.amount());
         validateCardActive(fromCard, "source");
         validateCardActive(toCard, "destination");
     }

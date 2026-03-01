@@ -68,8 +68,8 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(
             @Valid @RequestBody RegisterRequest request
     ) {
-        log.info("Регистрация нового пользователя: {}", request.getUsername());
-        if (request.getRole().equals(Role.ADMIN)) {
+        log.info("Регистрация нового пользователя: {}", request.username());
+        if (request.role().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can create other admins");
         }
         return ResponseEntity.ok(authenticationService.register(request));
