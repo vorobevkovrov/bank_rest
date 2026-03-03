@@ -18,7 +18,7 @@
 java -version
 ```
 
-# Ожидаемый вывод: openjdk version "17.x.x"
+## Ожидаемый вывод: openjdk version "17.x.x"
 
 #### Apache Maven 3.8.x или выше
 
@@ -26,7 +26,7 @@ java -version
 mvn -version
 ```
 
-# Ожидаемый вывод: Apache Maven 3.8.x
+## Ожидаемый вывод: Apache Maven 3.8.x
 
 #### PostgreSQL 8.0 или выше
 
@@ -34,7 +34,7 @@ mvn -version
 psql --version
 ```
 
-# Ожидаемый вывод: psql (PostgreSQL) 8.0.x
+## Ожидаемый вывод: psql (PostgreSQL) 8.0.x
 
 #### Git
 
@@ -42,7 +42,7 @@ psql --version
 git --version
 ```
 
-# Ожидаемый вывод: git version 2.x.x
+## Ожидаемый вывод: git version 2.x.x
 
 #### Docker
 
@@ -50,7 +50,7 @@ git --version
 docker --version
 ```
 
-# Ожидаемый вывод: Docker version 20.x.x
+## Ожидаемый вывод: Docker version 20.x.x
 
 #### Docker compose
 
@@ -58,7 +58,7 @@ docker --version
 docker-compose --version
 ```
 
-# Ожидаемый вывод: docker-compose version 1.29.x
+## Ожидаемый вывод: docker-compose version 1.29.x
 
 ## 🗄️ Настройка базы данных
 
