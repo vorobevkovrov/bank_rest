@@ -1,12 +1,20 @@
 # Система управления банковскими картами
-
 ## 📋 О проекте
+Аутентификация и авторизация  
+    Spring Security + JWT
+    Роли: ADMIN и USER 
 
-Приложение для управления банковскими картами с возможностью:
-
-- Создания и управления картами
-- Просмотра списка карт
-- Выполнения переводов между своими картами
+✅ Возможности <br>
+Администратор:  <br>
+    Создаёт, блокирует, активирует, удаляет карты <br>
+    Управляет пользователями <br>
+    Видит все карты <br>
+    
+Пользователь:  <br>
+    Просматривает свои карты (поиск + пагинация)<br>
+    Запрашивает блокировку карты<br>
+    Делает переводы между своими картами<br>
+    Смотрит баланс<br>
 
 ## 🔧 Требования к окружению
 
@@ -18,7 +26,7 @@
 java -version
 ```
 
-## Ожидаемый вывод: openjdk version "17.x.x"
+##### Ожидаемый вывод: openjdk version "17.x.x"
 
 #### Apache Maven 3.8.x или выше
 
@@ -26,7 +34,7 @@ java -version
 mvn -version
 ```
 
-## Ожидаемый вывод: Apache Maven 3.8.x
+##### Ожидаемый вывод: Apache Maven 3.8.x
 
 #### PostgreSQL 8.0 или выше
 
@@ -34,7 +42,7 @@ mvn -version
 psql --version
 ```
 
-## Ожидаемый вывод: psql (PostgreSQL) 8.0.x
+##### Ожидаемый вывод: psql (PostgreSQL) 8.0.x
 
 #### Git
 
@@ -42,7 +50,7 @@ psql --version
 git --version
 ```
 
-## Ожидаемый вывод: git version 2.x.x
+##### Ожидаемый вывод: git version 2.x.x
 
 #### Docker
 
@@ -50,7 +58,7 @@ git --version
 docker --version
 ```
 
-## Ожидаемый вывод: Docker version 20.x.x
+##### Ожидаемый вывод: Docker version 20.x.x
 
 #### Docker compose
 
@@ -58,7 +66,7 @@ docker --version
 docker-compose --version
 ```
 
-## Ожидаемый вывод: docker-compose version 1.29.x
+##### Ожидаемый вывод: docker-compose version 1.29.x
 
 ## 🗄️ Настройка базы данных
 
@@ -157,13 +165,13 @@ mvn spring-boot:run
 
 ### Способ 3: Запуск через Docker compose
 
-# Из корневой директории проекта
+### Из корневой директории проекта
 
 ```bash
 docker-compose up --build
 ```
 
-# Остановка контейнера
+### Остановка контейнера
 
 ```bash
 docker-compose down
@@ -229,7 +237,7 @@ curl -X POST http://localhost:8080/api/v1/auth/authenticate \
   }'
 ```
 
-## 📁 Структура .env.example
+### 📁 Структура .env.example
 
 ```env
 # База данных
