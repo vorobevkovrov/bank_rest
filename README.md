@@ -1,5 +1,8 @@
 # Система управления банковскими картами
 ## 📋 О проекте
+💡 Технологии <br>  
+    Java 17+, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Liquibase, Docker, JWT, Swagger (OpenAPI)<br>
+    
 Аутентификация и авторизация  
     Spring Security + JWT
     Роли: ADMIN и USER 
