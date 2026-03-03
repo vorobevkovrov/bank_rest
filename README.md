@@ -1,105 +1,248 @@
-<h1>🚀 Разработка Системы Управления Банковскими Картами</h1>
+# Система управления банковскими картами
 
-<h2>📁 Стартовая структура</h2>
-  <p>
-    Проектная структура с директориями и описательными файлами (<code>README Controller.md</code>, <code>README Service.md</code> и т.д.) уже подготовлена.<br />
-    Все реализации нужно добавлять <strong>в соответствующие директории</strong>.
-  </p>
-  <p>
-    После завершения разработки <strong>временные README-файлы нужно удалить</strong>, чтобы они не попадали в итоговую сборку.
-  </p>
-  
-<h2>📝 Описание задачи</h2>
-  <p>Разработать backend-приложение на Java (Spring Boot) для управления банковскими картами:</p>
-  <ul>
-    <li>Создание и управление картами</li>
-    <li>Просмотр карт</li>
-    <li>Переводы между своими картами</li>
-  </ul>
+## 📋 О проекте
 
-<h2>💳 Атрибуты карты</h2>
-  <ul>
-    <li>Номер карты (зашифрован, отображается маской: <code>**** **** **** 1234</code>)</li>
-    <li>Владелец</li>
-    <li>Срок действия</li>
-    <li>Статус: Активна, Заблокирована, Истек срок</li>
-    <li>Баланс</li>
-  </ul>
+Приложение для управления банковскими картами с возможностью:
 
-<h2>🧾 Требования</h2>
+- Создания и управления картами
+- Просмотра списка карт
+- Выполнения переводов между своими картами
 
-<h3>✅ Аутентификация и авторизация</h3>
-  <ul>
-    <li>Spring Security + JWT</li>
-    <li>Роли: <code>ADMIN</code> и <code>USER</code></li>
-  </ul>
+## 🔧 Требования к окружению
 
-<h3>✅ Возможности</h3>
-<strong>Администратор:</strong>
-  <ul>
-    <li>Создаёт, блокирует, активирует, удаляет карты</li>
-    <li>Управляет пользователями</li>
-    <li>Видит все карты</li>
-  </ul>
+### Необходимое программное обеспечение
 
-<strong>Пользователь:</strong>
-  <ul>
-    <li>Просматривает свои карты (поиск + пагинация)</li>
-    <li>Запрашивает блокировку карты</li>
-    <li>Делает переводы между своими картами</li>
-    <li>Смотрит баланс</li>
-  </ul>
+#### Java Development Kit (JDK) 17 или выше
 
-<h3>✅ API</h3>
-  <ul>
-    <li>CRUD для карт</li>
-    <li>Переводы между своими картами</li>
-    <li>Фильтрация и постраничная выдача</li>
-    <li>Валидация и сообщения об ошибках</li>
-  </ul>
+```bash
+java -version
+```
 
-<h3>✅ Безопасность</h3>
-  <ul>
-    <li>Шифрование данных</li>
-    <li>Ролевой доступ</li>
-    <li>Маскирование номеров карт</li>
-  </ul>
+# Ожидаемый вывод: openjdk version "17.x.x"
 
-<h3>✅ Работа с БД</h3>
-  <ul>
-    <li>PostgreSQL или MySQL</li>
-    <li>Миграции через Liquibase (<code>src/main/resources/db/migration</code>)</li>
-  </ul>
+#### Apache Maven 3.8.x или выше
 
-<h3>✅ Документация</h3>
-  <ul>
-    <li>Swagger UI / OpenAPI — <code>docs/openapi.yaml</code></li>
-    <li><code>README.md</code> с инструкцией запуска</li>
-  </ul>
+```bash
+mvn -version
+```
 
-<h3>✅ Развёртывание и тестирование</h3>
-  <ul>
-    <li>Docker Compose для dev-среды</li>
-    <li>Liquibase миграции</li>
-    <li>Юнит-тесты ключевой бизнес-логики</li>
-  </ul>
+# Ожидаемый вывод: Apache Maven 3.8.x
 
-<h2>📊 Оценка</h2>
-  <ul>
-    <li>Соответствие требованиям</li>
-    <li>Чистота архитектуры и кода</li>
-    <li>Безопасность</li>
-    <li>Обработка ошибок</li>
-    <li>Покрытие тестами</li>
-    <li>ООП и уровни абстракции</li>
-  </ul>
+#### PostgreSQL 8.0 или выше
 
-<h2>💡 Технологии</h2>
-  <p>
-    Java 17+, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL/MySQL, Liquibase, Docker, JWT, Swagger (OpenAPI)
-  </p>
+```bash
+psql --version
+```
 
-<h2> 📤 Формат сдачи</h2>
-<p>
-Весь код и изменения принимаются только через git-репозиторий с открытым доступом к проекту. Отправка файлов в любом виде не принимается.
-  </p>
+# Ожидаемый вывод: psql (PostgreSQL) 8.0.x
+
+#### Git
+
+```bash
+git --version
+```
+
+# Ожидаемый вывод: git version 2.x.x
+
+#### Docker
+
+```bash
+docker --version
+```
+
+# Ожидаемый вывод: Docker version 20.x.x
+
+#### Docker compose
+
+```bash
+docker-compose --version
+```
+
+# Ожидаемый вывод: docker-compose version 1.29.x
+
+## 🗄️ Настройка базы данных
+
+### 1. Подключение к PostgreSQL
+
+```bash
+# Подключение к PostgreSQL от имени пользователя postgres
+sudo -u postgres psql
+
+# Или если используете локальную установку с паролем
+psql -U postgres -h localhost
+```
+
+### 2. Создание базы данных
+
+Выполните SQL скрипт для создания базы данных:
+
+```sql
+CREATE DATABASE bank_rest_local
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LOCALE_PROVIDER = 'libc'
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+```
+
+Для выхода из PostgreSQL выполните:
+
+```sql
+\q
+```
+
+## ⚙️ Конфигурация приложения
+
+### Настройка переменных окружения
+
+1. **Создайте файл `.env` в корне проекта**
+   ```bash
+   # Из корня проекта выполните:
+   cp  .env
+   ```
+2. **Или отредактируйте файл `.env.example`** со следующими параметрами:
+   ```env
+   # Настройки базы данных
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=bank_rest_local
+   DB_USERNAME=postgres
+   DB_PASSWORD=your_password
+
+   # Настройки JWT
+   JWT_SECRET=your_jwt_secret_key_here_minimum_32_chars_long
+   JWT_EXPIRATION=86400000
+
+   # Ключ шифрования (для AES, должен быть 16, 24 или 32 символа)
+   ENCRYPTION_KEY=your_16_24_or_32_char_key
+   ```
+
+3. **Проверьте настройки в `src/main/resources/application.yml`**
+
+   Убедитесь, что файл application.yml ссылается на переменные из .env:
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+       username: ${DB_USERNAME}
+       password: ${DB_PASSWORD}
+   ```
+
+## 🚀 Запуск приложения
+
+### Способ 1: Запуск через Maven (рекомендуется)
+
+```bash
+# Перейдите в корневую директорию проекта
+cd /path/to/bank_rest
+
+# Очистка и сборка проекта
+mvn clean compile
+
+# Запуск приложения
+mvn spring-boot:run
+```
+
+### Способ 2: Запуск через IDE
+
+1. Откройте проект в вашей IDE (IntelliJ IDEA, Eclipse, VS Code)
+2. Дождитесь загрузки зависимостей Maven
+3. Найдите главный класс приложения: `BankCards.java`
+   ```
+   src/main/java/com/example/bankcards/BankCards.java
+   ```
+4. Запустите метод `main()` (зеленая стрелка рядом с классом)
+5.
+
+### Способ 3: Запуск через Docker compose
+
+# Из корневой директории проекта
+
+```bash
+docker-compose up --build
+```
+
+# Остановка контейнера
+
+```bash
+docker-compose down
+```
+
+### ✅ Признаки успешного запуска
+
+После запуска в консоли должны появиться логи:
+
+```
+2026-03-02 17:02:02 [main] INFO  com.example.bankcards.BankCards - Started BankCards in 3.456 seconds (process running for 3.521)
+```
+
+## 🔍 Проверка работоспособности
+
+### 1. Проверка Health Check
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+**Ожидаемый ответ:**
+
+```json
+{
+  "status": "UP"
+}
+```
+
+### 2. Доступ к Swagger UI
+
+Откройте в браузере: http://localhost:8080/swagger-ui.html
+
+Swagger UI предоставляет:
+
+- 📚 Документацию всех API endpoints
+- 🔍 Возможность тестировать запросы прямо в браузере
+- 🔐 Информацию о требуемой аутентификации
+
+### 3. Проверка основных endpoints
+
+#### Регистрация пользователя
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123",
+    "email": "test@example.com",
+    "role": "USER"
+  }'
+```
+
+#### Аутентификация
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123"
+  }'
+```
+
+## 📁 Структура .env.example
+
+```env
+# База данных
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bank_rest_local
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+# JWT
+JWT_SECRET=your_32_character_jwt_secret_key_here
+JWT_EXPIRATION=86400000
+
+# Шифрование
+ENCRYPTION_KEY=your_16_24_or_32_char_key
+```

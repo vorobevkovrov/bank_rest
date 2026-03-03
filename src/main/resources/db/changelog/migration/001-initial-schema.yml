@@ -3,6 +3,30 @@ databaseChangeLog:
       id: 001-1-create-users-table
       author: maxim vorobev
       changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              -- 1. Передаем владение всеми существующими таблицами в схеме public
+              DO $$ 
+              DECLARE r RECORD;
+              BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+                  EXECUTE format('ALTER TABLE public.%I OWNER TO bank_user', r.tablename);
+                END LOOP;
+              END $$;
+              
+              -- 2. Даем права на последовательности (для автоинкремента ID)
+              DO $$ 
+              DECLARE r RECORD;
+              BEGIN
+                FOR r IN (SELECT relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'S') LOOP
+                  EXECUTE format('ALTER SEQUENCE public.%I OWNER TO bank_user', r.relname);
+                END LOOP;
+              END $$;
+               -- 3. Настраиваем права "по умолчанию" для будущих таблиц
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bank_user;
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bank_user;
+
         - createTable:
             tableName: users
             columns:

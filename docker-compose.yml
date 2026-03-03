@@ -1,9 +1,79 @@
-# 
-# docker-compose.yml — определяет сервисы для разработки и тестирования.
+version: '3.8'
 
-Что нужно сделать:
-  - Настроить сервисы для:
-      - PostgreSQL (или MySQL) с начальной базой.
-      - Приложения Spring Boot (если нужно).
-  - Открыть нужные порты (например, 5432, 8080).
-  - Настроить volume для хранения данных БД.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bank_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bank_network
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bank_app
+    environment:
+      # База данных
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      
+      # JWT настройки
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      
+      # Шифрование
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD}
+      
+      # Настройки приложения
+      SERVER_PORT: ${APP_PORT}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED}
+      
+      # Логирование
+      LOG_LEVEL: ${LOG_LEVEL}
+      SECURITY_LOG_LEVEL: ${SECURITY_LOG_LEVEL}
+      SQL_LOG_LEVEL: ${SQL_LOG_LEVEL}
+      SHOW_SQL: ${SHOW_SQL}
+      
+      # Дефолтные пароли
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
+      USER_DEFAULT_PASSWORD: ${USER_DEFAULT_PASSWORD}
+      
+      # Системный пользователь для Liquibase
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bank_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: bank_postgres_data
+
+networks:
+  bank_network:
+    name: bank_network
+    driver: bridge

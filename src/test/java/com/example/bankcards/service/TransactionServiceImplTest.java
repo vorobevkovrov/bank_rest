@@ -1,4 +1,4 @@
-package com.example.bankcards.service.impl;
+package com.example.bankcards.service;
 
 import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.response.TransferResponse;
@@ -9,6 +9,7 @@ import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.TransactionRepository;
+import com.example.bankcards.service.impl.TransactionServiceImpl;
 import com.example.bankcards.util.TransferValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

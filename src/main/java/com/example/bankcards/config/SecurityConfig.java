@@ -63,7 +63,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/authenticate",
-                                "/api/v1/auth/register")
+                                "/api/v1/auth/register",
+                                "/actuator/health"
+                        )
                         .permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -134,8 +136,8 @@ public class SecurityConfig {
      * </pre>
      * </p>
      *
-     * @deprecated Используйте только для разработки и тестирования. Не применять в продакшене!
      * @return кодировщик паролей (небезопасная версия)
+     * @deprecated Используйте только для разработки и тестирования. Не применять в продакшене!
      */
     @Bean
     @SuppressWarnings("deprecation")
