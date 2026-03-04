@@ -18,7 +18,7 @@
 java -version
 ```
 
-# Ожидаемый вывод: openjdk version "17.x.x"
+##### Ожидаемый вывод: openjdk version "17.x.x"
 
 #### Apache Maven 3.8.x или выше
 
@@ -26,7 +26,7 @@ java -version
 mvn -version
 ```
 
-# Ожидаемый вывод: Apache Maven 3.8.x
+##### Ожидаемый вывод: Apache Maven 3.8.x
 
 #### PostgreSQL 8.0 или выше
 
@@ -34,7 +34,7 @@ mvn -version
 psql --version
 ```
 
-# Ожидаемый вывод: psql (PostgreSQL) 8.0.x
+##### Ожидаемый вывод: psql (PostgreSQL) 8.0.x
 
 #### Git
 
@@ -42,7 +42,7 @@ psql --version
 git --version
 ```
 
-# Ожидаемый вывод: git version 2.x.x
+##### Ожидаемый вывод: git version 2.x.x
 
 #### Docker
 
@@ -50,7 +50,7 @@ git --version
 docker --version
 ```
 
-# Ожидаемый вывод: Docker version 20.x.x
+##### Ожидаемый вывод: Docker version 20.x.x
 
 #### Docker compose
 
@@ -58,7 +58,7 @@ docker --version
 docker-compose --version
 ```
 
-# Ожидаемый вывод: docker-compose version 1.29.x
+##### Ожидаемый вывод: docker-compose version 1.29.x
 
 ## 🗄️ Настройка базы данных
 
@@ -131,7 +131,7 @@ CREATE DATABASE bank_rest_local
 
 ## 🚀 Запуск приложения
 
-### Способ 1: Запуск через Maven (рекомендуется)
+#### Способ 1: Запуск через Maven (рекомендуется)
 
 ```bash
 # Перейдите в корневую директорию проекта
@@ -144,7 +144,7 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
-### Способ 2: Запуск через IDE
+#### Способ 2: Запуск через IDE
 
 1. Откройте проект в вашей IDE (IntelliJ IDEA, Eclipse, VS Code)
 2. Дождитесь загрузки зависимостей Maven
@@ -155,15 +155,15 @@ mvn spring-boot:run
 4. Запустите метод `main()` (зеленая стрелка рядом с классом)
 5.
 
-### Способ 3: Запуск через Docker compose
+#### Способ 3: Запуск через Docker compose
 
-# Из корневой директории проекта
+##### Из корневой директории проекта
 
 ```bash
 docker-compose up --build
 ```
 
-# Остановка контейнера
+### Остановка контейнера
 
 ```bash
 docker-compose down
@@ -177,7 +177,7 @@ docker-compose down
 2026-03-02 17:02:02 [main] INFO  com.example.bankcards.BankCards - Started BankCards in 3.456 seconds (process running for 3.521)
 ```
 
-## 🔍 Проверка работоспособности
+### 🔍 Проверка работоспособности
 
 ### 1. Проверка Health Check
 
@@ -203,7 +203,7 @@ Swagger UI предоставляет:
 - 🔍 Возможность тестировать запросы прямо в браузере
 - 🔐 Информацию о требуемой аутентификации
 
-## 📁 Структура .env.example
+### 📁 Структура .env.example
 
 ```env
 # База данных
