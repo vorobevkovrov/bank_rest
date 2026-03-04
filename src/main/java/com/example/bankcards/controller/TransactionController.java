@@ -2,6 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.response.TransferResponse;
+import com.example.bankcards.exception.exceptions.InsufficientFundsException;
 import com.example.bankcards.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -123,7 +124,7 @@ public class TransactionController {
      *         ID транзакции, статус, дату и время, остатки на картах
      *
      * @throws com.example.bankcards.exception.CardNotFoundException если одна из карт не найдена
-     * @throws com.example.bankcards.exception.InsufficientFundsException если недостаточно средств
+     * @throws InsufficientFundsException если недостаточно средств
      * @throws com.example.bankcards.exception.InvalidCardStateException если карта заблокирована или неактивна
      * @throws org.springframework.security.access.AccessDeniedException если пользователь не владеет картами
      * @throws jakarta.validation.ValidationException если данные запроса не проходят валидацию

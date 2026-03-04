@@ -6,7 +6,7 @@ import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.exception.UserAlreadyExistsException;
+import com.example.bankcards.exception.exceptions.UserAlreadyExistsException;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.service.AuthenticationService;
 import com.example.bankcards.util.JwtService;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-//TODO all passed
+
 @WebMvcTest(AuthenticationController.class)
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)

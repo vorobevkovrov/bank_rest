@@ -1,4 +1,4 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 import lombok.Builder;
 import lombok.Data;

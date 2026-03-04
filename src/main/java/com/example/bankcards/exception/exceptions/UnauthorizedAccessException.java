@@ -1,8 +1,8 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 public class UnauthorizedAccessException extends RuntimeException {
     public UnauthorizedAccessException(String resourceName) {
-        super(String.format("%s не найден '",
+        super(String.format("%s",
                 resourceName));
     }
 }

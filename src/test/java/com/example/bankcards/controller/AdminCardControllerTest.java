@@ -7,7 +7,7 @@ import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.entity.CardRequestStatus;
 import com.example.bankcards.entity.CardStatus;
-import com.example.bankcards.exception.ResourceNotFoundException;
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.impl.CardRequestServiceImpl;

@@ -3,7 +3,7 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.request.BlockCardRequest;
 import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.entity.*;
-import com.example.bankcards.exception.*;
+import com.example.bankcards.exception.exceptions.*;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.CardRequestRepository;
 import com.example.bankcards.repository.UserRepository;
@@ -77,7 +77,7 @@ public class CardRequestServiceImpl implements CardRequestService {
     public CardRequestResponse rejectBlockRequest(Long requestId, String adminUsername) {
         log.info("Admin {} rejecting block request {}", adminUsername, requestId);
         CardRequest cardRequest = cardRequestRepository.findById(requestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Request not found "));
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
         cardRequest.setStatus(CardRequestStatus.REJECTED);
         cardRequestRepository.save(cardRequest);
         log.info("Admin {} rejected block request {}", adminUsername, requestId);

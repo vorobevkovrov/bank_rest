@@ -1,4 +1,4 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 public class InvalidTokenException extends RuntimeException {
     public InvalidTokenException(String message) {

@@ -203,32 +203,6 @@ Swagger UI предоставляет:
 - 🔍 Возможность тестировать запросы прямо в браузере
 - 🔐 Информацию о требуемой аутентификации
 
-### 3. Проверка основных endpoints
-
-#### Регистрация пользователя
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123",
-    "email": "test@example.com",
-    "role": "USER"
-  }'
-```
-
-#### Аутентификация
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/authenticate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123"
-  }'
-```
-
 ## 📁 Структура .env.example
 
 ```env

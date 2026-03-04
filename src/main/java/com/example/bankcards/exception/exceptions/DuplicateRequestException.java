@@ -1,4 +1,4 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 public class DuplicateRequestException extends RuntimeException {
     public DuplicateRequestException(String message) {

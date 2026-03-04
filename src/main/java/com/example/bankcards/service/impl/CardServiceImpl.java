@@ -7,9 +7,9 @@ import com.example.bankcards.dto.response.CardResponse;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.CardStatus;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.exception.CardException;
-import com.example.bankcards.exception.ResourceNotFoundException;
-import com.example.bankcards.exception.UnauthorizedAccessException;
+import com.example.bankcards.exception.exceptions.CardException;
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
+import com.example.bankcards.exception.exceptions.UnauthorizedAccessException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.CardService;
@@ -25,6 +25,39 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+/**
+ * Реализация сервиса для управления банковскими картами.
+ * <p>
+ * Предоставляет функционал для создания, активации, блокировки, обновления, удаления
+ * и получения информации о картах. Включает проверки прав доступа и бизнес-логику
+ * операций с картами.
+ * </p>
+ *
+ * <h2>Основные возможности:</h2>
+ * <ul>
+ *   <li>Создание новой карты с генерацией номера и проверкой уникальности</li>
+ *   <li>Активация созданной карты</li>
+ *   <li>Блокировка активной карты</li>
+ *   <li>Получение баланса карты (с проверкой прав доступа)</li>
+ *   <li>Обновление параметров карты (срок действия, статус, баланс)</li>
+ *   <li>Удаление карты</li>
+ *   <li>Поиск карт по различным критериям</li>
+ * </ul>
+ *
+ * <h2>Безопасность:</h2>
+ * <ul>
+ *   <li>Пользователи могут получать доступ только к своим картам</li>
+ *   <li>Администраторы имеют доступ ко всем картам</li>
+ *   <li>Номера карт хранятся в зашифрованном виде</li>
+ * </ul>
+ *
+ * @author Maxim Vorobev
+ * @version 1.0
+ * @see CardService
+ * @see Card
+ * @see CardRepository
+ * @since 1.0
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,6 +68,26 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final GenerateCardNumber generateCardNumber;
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Процесс создания карты:
+     * <ol>
+     *   <li>Поиск пользователя по ID</li>
+     *   <li>Генерация уникального номера карты</li>
+     *   <li>Проверка уникальности последних 4 цифр для пользователя</li>
+     *   <li>Шифрование номера карты</li>
+     *   <li>Создание сущности Card со статусом {@link CardStatus#CREATED}</li>
+     *   <li>Сохранение в базу данных</li>
+     * </ol>
+     * </p>
+     *
+     * @param request запрос на создание карты (содержит userId, имя держателя, срок действия, начальный баланс)
+     * @return созданная карта в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если пользователь не найден
+     * @throws CardException если последние 4 цифры уже существуют у пользователя
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CardResponse createCard(CardCreateRequest request) {
@@ -72,6 +125,19 @@ public class CardServiceImpl implements CardService {
         return cardMapper.cardToCardResponse(savedCard);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Активирует карту, изменяя её статус с {@link CardStatus#CREATED} на {@link CardStatus#ACTIVE}.
+     * Карта должна существовать и не быть уже активной.
+     * </p>
+     *
+     * @param cardId идентификатор карты для активации
+     * @return активированная карта в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если карта не найдена
+     * @throws CardException если карта уже активна
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CardResponse activateCard(Long cardId) {
@@ -89,6 +155,24 @@ public class CardServiceImpl implements CardService {
         return cardMapper.cardToCardResponse(activatedCard);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Возвращает баланс карты с расшифрованным номером.
+     * Выполняет проверку прав доступа:
+     * <ul>
+     *   <li>Администраторы имеют доступ к любой карте</li>
+     *   <li>Обычные пользователи могут просматривать только свои карты</li>
+     * </ul>
+     * </p>
+     *
+     * @param cardId идентификатор карты
+     * @param currentUser данные текущего аутентифицированного пользователя
+     * @return информация о балансе карты {@link BalanceResponse}
+     * @throws ResourceNotFoundException если карта не найдена
+     * @throws UnauthorizedAccessException если у пользователя нет прав на просмотр карты
+     */
     @Override
     @Transactional(readOnly = true)
     public BalanceResponse getCardBalance(Long cardId, UserDetails currentUser) {
@@ -102,6 +186,24 @@ public class CardServiceImpl implements CardService {
                 .build();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Обновляет поля карты, если они предоставлены в запросе:
+     * <ul>
+     *   <li>Срок действия ({@code expiryDate})</li>
+     *   <li>Статус ({@code status})</li>
+     *   <li>Баланс ({@code balance})</li>
+     * </ul>
+     * Сохранение в базу данных происходит только при наличии изменений.
+     * </p>
+     *
+     * @param cardId идентификатор карты для обновления
+     * @param request запрос с обновляемыми полями
+     * @return обновленная карта в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если карта не найдена
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CardResponse updateCard(Long cardId, CardUpdateRequest request) {
@@ -143,6 +245,17 @@ public class CardServiceImpl implements CardService {
         return cardMapper.cardToCardResponse(card);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Физически удаляет карту из базы данных.
+     * <strong>Внимание:</strong> Операция необратима.
+     * </p>
+     *
+     * @param cardId идентификатор карты для удаления
+     * @throws ResourceNotFoundException если карта не найдена
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCard(Long cardId) {
@@ -156,6 +269,19 @@ public class CardServiceImpl implements CardService {
     }
 
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Блокирует карту, изменяя её статус на {@link CardStatus#BLOCKED}.
+     * Карта должна существовать и не быть уже заблокированной.
+     * </p>
+     *
+     * @param cardId идентификатор карты для блокировки
+     * @return заблокированная карта в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если карта не найдена
+     * @throws CardException если карта уже заблокирована
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CardResponse blockCard(Long cardId) {
@@ -175,6 +301,17 @@ public class CardServiceImpl implements CardService {
     }
 
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Возвращает информацию о карте по её идентификатору.
+     * </p>
+     *
+     * @param cardId идентификатор карты
+     * @return информация о карте в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если карта не найдена
+     */
     @Override
     @Transactional(readOnly = true)
     public CardResponse getCardById(Long cardId) {
@@ -185,6 +322,16 @@ public class CardServiceImpl implements CardService {
     }
 
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Возвращает постраничный список всех карт в системе.
+     * </p>
+     *
+     * @param pageable параметры пагинации (номер страницы, размер, сортировка)
+     * @return страница с картами в формате {@link CardResponse}
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<CardResponse> getAllCards(Pageable pageable) {
@@ -193,6 +340,17 @@ public class CardServiceImpl implements CardService {
 
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Возвращает постраничный список карт конкретного пользователя по его ID.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param pageable параметры пагинации
+     * @return страница с картами пользователя в формате {@link CardResponse}
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<CardResponse> getCardsByUserId(Long userId, Pageable pageable) {
@@ -200,6 +358,19 @@ public class CardServiceImpl implements CardService {
                 .map(cardMapper::cardToCardResponse);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Возвращает постраничный список карт конкретного пользователя по его имени.
+     * Сначала находит пользователя по имени, затем запрашивает его карты.
+     * </p>
+     *
+     * @param userName имя пользователя
+     * @param pageable параметры пагинации
+     * @return страница с картами пользователя в формате {@link CardResponse}
+     * @throws ResourceNotFoundException если пользователь с указанным именем не найден
+     */
     @Override
     public Page<CardResponse> getCardsByUserName(String userName, Pageable pageable) {
         // Сначала находим пользователя
@@ -213,6 +384,21 @@ public class CardServiceImpl implements CardService {
         return cardResponsePage;
     }
 
+    /**
+     * Проверяет права доступа текущего пользователя к карте.
+     * <p>
+     * Логика проверки:
+     * <ul>
+     *   <li>Если пользователь администратор - доступ разрешен</li>
+     *   <li>Если пользователь владелец карты - доступ разрешен</li>
+     *   <li>В остальных случаях - доступ запрещен</li>
+     * </ul>
+     * </p>
+     *
+     * @param card карта, к которой запрашивается доступ
+     * @param currentUser данные текущего аутентифицированного пользователя
+     * @throws UnauthorizedAccessException если у пользователя нет прав доступа к карте
+     */
     private void checkAccessRights(Card card, UserDetails currentUser) {
         // Проверяем, является ли пользователь ADMIN
         boolean isAdmin = currentUser.getAuthorities().stream()
@@ -236,5 +422,4 @@ public class CardServiceImpl implements CardService {
 
         log.debug("User access granted for card ID: {}", card.getId());
     }
-
 }

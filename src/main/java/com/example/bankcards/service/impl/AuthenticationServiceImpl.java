@@ -1,7 +1,7 @@
 package com.example.bankcards.service.impl;
 
-import com.example.bankcards.exception.InvalidCredentialsException;
-import com.example.bankcards.exception.UserAlreadyExistsException;
+import com.example.bankcards.exception.exceptions.InvalidCredentialsException;
+import com.example.bankcards.exception.exceptions.UserAlreadyExistsException;
 import com.example.bankcards.service.AuthenticationService;
 import com.example.bankcards.util.JwtService;
 import com.example.bankcards.dto.request.AuthenticationRequest;
@@ -9,7 +9,7 @@ import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.exception.ResourceNotFoundException;
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

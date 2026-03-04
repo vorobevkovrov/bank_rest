@@ -5,7 +5,7 @@ import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.AuthenticationResponse;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.exception.ResourceNotFoundException;
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.impl.AuthenticationServiceImpl;
 import com.example.bankcards.util.JwtService;

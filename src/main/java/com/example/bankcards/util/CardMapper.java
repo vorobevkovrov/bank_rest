@@ -14,10 +14,7 @@ import java.util.Date;
 @Mapper(componentModel = "spring")
 public interface CardMapper {
     @Mapping(target = "id", ignore = true)
-//    @Mapping(target = "cardNumber", source = "cardNumberEncrypted")
-//    @Mapping(target = "cardNumberLastFour", source = "cardNumberLastFour")
     @Mapping(target = "expiryDate", source = "expiryDate")
-//    @Mapping(target = "status", source = "cardStatus")
     @Mapping(target = "balance", source = "initialBalance")
     @Mapping(target = "user", source = "userId")
     @Mapping(target = "cardHolderName", source = "cardHolderName")
@@ -29,14 +26,12 @@ public interface CardMapper {
     @Mapping(target = "status", source = "status")
     @Mapping(target = "balance", source = "balance")
     @Mapping(target = "userId", source = "user.id")
-        //@Mapping(target = "holderName", source = "user.username")
     CardResponse cardToCardResponse(Card card);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "expiryDate", source = "expiryDate")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "balance", source = "balance")
-    //@Mapping(target = "userId", source = "user.id")
     Card cardUpdateRequestToCardResponse(CardUpdateRequest cardUpdateRequest);
 
     // Преобразование LocalDate -> Date
@@ -65,13 +60,6 @@ public interface CardMapper {
         return user;
     }
 
-    // Создание маскированного номера для CardResponse
-//    @AfterMapping
-//    default void setMaskedNumber(@MappingTarget CardResponse cardResponse, Card card) {
-//        if (card.getCardNumberLastFour() != null && !card.getCardNumberLastFour().isEmpty()) {
-//            cardResponse.setMaskedNumber("**** **** **** " + card.getCardNumberLastFour());
-//        }
-//    }
 
     // Альтернативный вариант через выражение (можно использовать вместо @AfterMapping)
     @Named("maskNumber")

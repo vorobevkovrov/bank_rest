@@ -1,5 +1,7 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
+import com.example.bankcards.exception.exceptions.UserAlreadyExistsException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +54,7 @@ public class AuthenticationController {
      * @param request данные для регистрации (username, password, email, role)
      * @return ResponseEntity с токеном аутентификации и информацией о пользователе
      * @throws org.springframework.security.access.AccessDeniedException  если попытка создать администратора
-     * @throws com.example.bankcards.exception.UserAlreadyExistsException если пользователь с таким username уже существует
+     * @throws UserAlreadyExistsException если пользователь с таким username уже существует
      */
     @Operation(
             summary = "Регистрация нового пользователя",
@@ -105,7 +107,7 @@ public class AuthenticationController {
      * @param userDetails информация о текущем аутентифицированном пользователе
      * @return ResponseEntity с токеном аутентификации и информацией о новом администраторе
      * @throws org.springframework.security.access.AccessDeniedException  если текущий пользователь не является ADMIN
-     * @throws com.example.bankcards.exception.UserAlreadyExistsException если пользователь с таким username уже существует
+     * @throws UserAlreadyExistsException если пользователь с таким username уже существует
      */
     @Operation(summary = "Создание администратора (только для существующих админов)")
     @SecurityRequirement(name = "BearerAuthentication")
@@ -130,7 +132,7 @@ public class AuthenticationController {
      *
      * @param userDetails информация о текущем аутентифицированном пользователе
      * @return ResponseEntity с данными пользователя (без пароля)
-     * @throws com.example.bankcards.exception.ResourceNotFoundException если пользователь не найден
+     * @throws ResourceNotFoundException если пользователь не найден
      */
     @Operation(summary = "Получение информации о текущем пользователе")
     @SecurityRequirement(name = "BearerAuthentication")

@@ -4,6 +4,8 @@ import com.example.bankcards.dto.request.CardCreateRequest;
 import com.example.bankcards.dto.request.CardUpdateRequest;
 import com.example.bankcards.dto.response.CardRequestResponse;
 import com.example.bankcards.dto.response.CardResponse;
+import com.example.bankcards.exception.exceptions.CardException;
+import com.example.bankcards.exception.exceptions.ResourceNotFoundException;
 import com.example.bankcards.service.CardRequestService;
 import com.example.bankcards.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,8 +77,8 @@ public class AdminCardController {
      * @param request      данные для создания карты (номер, тип, срок действия и т.д.)
      * @param adminDetails информация об администраторе, выполняющем операцию
      * @return ResponseEntity с созданной картой и статусом 201 (Created)
-     * @throws com.example.bankcards.exception.ResourceNotFoundException если пользователь не найден
-     * @throws com.example.bankcards.exception.CardException             если карта с такими последними четырьмя символами уже есть у этого пользователя
+     * @throws ResourceNotFoundException если пользователь не найден
+     * @throws CardException             если карта с такими последними четырьмя символами уже есть у этого пользователя
      */
     @Operation(
             summary = "Создать новую карту",
@@ -108,7 +110,7 @@ public class AdminCardController {
         CardResponse response = cardService.createCard(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    //TODO
+
     /**
      * Активирует ранее созданную карту.
      * <p>
@@ -119,8 +121,8 @@ public class AdminCardController {
      * @param cardId уникальный идентификатор карты
      * @param adminDetails информация об администраторе, выполняющем операцию
      * @return ResponseEntity с активированной картой
-     * @throws com.example.bankcards.exception.ResourceNotFoundException если карта не найдена
-     * @throws com.example.bankcards.exception.CardException если карта уже активна
+     * @throws ResourceNotFoundException если карта не найдена
+     * @throws CardException если карта уже активна
      */
     @Operation(
             summary = "Активировать карту",

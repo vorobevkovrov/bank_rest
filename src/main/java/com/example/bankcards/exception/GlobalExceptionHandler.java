@@ -1,5 +1,6 @@
 package com.example.bankcards.exception;
 
+import com.example.bankcards.exception.exceptions.*;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -362,6 +363,26 @@ public class GlobalExceptionHandler {
 
     }
 
+    /**
+     * Обрабатывает исключение {@link CardBlockedException}.
+     * <p>
+     * Возникает при попытке выполнить операцию с заблокированной картой
+     * (например, перевод средств, пополнение, изменение лимитов).
+     * </p>
+     *
+     * @param ex      исключение типа {@link CardBlockedException}, содержащее информацию о заблокированной карте
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 409 (Conflict)
+     * @example <pre>
+     * POST /api/cards/123/transfer с заблокированной картой → 409 Conflict
+     * {
+     *   "error": "Conflict",
+     *   "message": "Card 123 is blocked"
+     * }
+     * </pre>
+     * @see CardBlockedException
+     * @see HttpStatus#CONFLICT
+     */
     @ExceptionHandler(CardBlockedException.class)
     public ResponseEntity<ErrorResponse> handleCardBlockedException(
             CardBlockedException ex, HttpServletRequest request) {
@@ -376,6 +397,26 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
+    /**
+     * Обрабатывает исключение {@link InsufficientFundsException}.
+     * <p>
+     * Возникает при попытке выполнить операцию, требующую списания средств,
+     * когда на карте недостаточно денег (например, перевод, оплата).
+     * </p>
+     *
+     * @param ex      исключение типа {@link InsufficientFundsException}, содержащее информацию о недостаточных средствах
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 400 (Bad Request)
+     * @example <pre>
+     * POST /api/cards/123/transfer с суммой больше баланса → 400 Bad Request
+     * {
+     *   "error": "Bad Request",
+     *   "message": "Insufficient funds on card 123. Available: 100.00, Required: 500.00"
+     * }
+     * </pre>
+     * @see InsufficientFundsException
+     * @see HttpStatus#BAD_REQUEST
+     */
     @ExceptionHandler(InsufficientFundsException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientFundsException(
             InsufficientFundsException ex, HttpServletRequest request) {
@@ -390,6 +431,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    /**
+     * Обрабатывает исключение {@link CardNotActiveException}.
+     * <p>
+     * Возникает при попытке выполнить операцию с неактивной картой
+     * (например, карта заблокирована администратором или просрочена).
+     * </p>
+     *
+     * @param ex      исключение типа {@link CardNotActiveException}, содержащее информацию о неактивной карте
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 400 (Bad Request)
+     * @example <pre>
+     * POST /api/cards/123/transfer с неактивной картой → 400 Bad Request
+     * {
+     *   "error": "Bad Request",
+     *   "message": "Card 123 is not active"
+     * }
+     * </pre>
+     * @see CardNotActiveException
+     * @see HttpStatus#BAD_REQUEST
+     */
     @ExceptionHandler(CardNotActiveException.class)
     public ResponseEntity<ErrorResponse> handleCardNotActiveException(CardNotActiveException ex,
                                                                       HttpServletRequest request) {
@@ -403,7 +464,6 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
-//TODO
 
     /**
      * Обрабатывает исключение {@link ExpiredJwtException}.
@@ -426,18 +486,35 @@ public class GlobalExceptionHandler {
      * @see HttpStatus#UNAUTHORIZED
      * @see com.example.bankcards.config.JwtAuthenticationFilter
      */
-//    @ExceptionHandler(ExpiredJwtException.class)
-//    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, HttpServletRequest request) {
-//        ErrorResponse error = ErrorResponse.builder()
-//                .timestamp(LocalDateTime.now())
-//                .status(HttpStatus.UNAUTHORIZED.value())
-//                .error("Token expired")
-//                .message(ex.getMessage())
-//                .path(getCurrentPath(request))
-//                .build();
-//        log.error("Token expired {}", ex.getMessage());
-//        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-//    }
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Token expired")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        log.error("Token expired {}", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Обрабатывает исключение {@link InvalidCredentialsException}.
+     * <p>
+     * Возникает при использовании недействительных учетных данных
+     * (например, неверный username или password при аутентификации).
+     * </p>
+     *
+     * @param ex      исключение типа {@link InvalidCredentialsException}
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 404 (Not Found)
+     * @deprecated Этот метод, вероятно, содержит ошибку в сигнатуре параметра.
+     *             Должен принимать {@link InvalidCredentialsException}, а не {@link ExpiredJwtException}.
+     *             Рекомендуется исправить параметр метода.
+     * @see InvalidCredentialsException
+     * @see HttpStatus#NOT_FOUND
+     */
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
             ExpiredJwtException ex, HttpServletRequest request) {
@@ -452,6 +529,26 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Обрабатывает исключение {@link BadCredentialsException}.
+     * <p>
+     * Возникает при неверных учетных данных во время аутентификации
+     * (стандартное исключение Spring Security).
+     * </p>
+     *
+     * @param ex      исключение типа {@link BadCredentialsException}
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 401 (Unauthorized)
+     * @example <pre>
+     * POST /api/auth/login с неверным паролем → 401 Unauthorized
+     * {
+     *   "error": "Unauthorized",
+     *   "message": "Invalid username or password"
+     * }
+     * </pre>
+     * @see BadCredentialsException
+     * @see HttpStatus#UNAUTHORIZED
+     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex,
                                                                        HttpServletRequest request) {
@@ -466,6 +563,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
+    /**
+     * Обрабатывает исключение {@link SameCardTransferException}.
+     * <p>
+     * Возникает при попытке выполнить перевод средств с карты на ту же самую карту.
+     * </p>
+     *
+     * @param ex      исключение типа {@link SameCardTransferException}
+     * @param request HTTP запрос, вызвавший исключение
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 400 (Bad Request)
+     * @example <pre>
+     * POST /api/transfers с одинаковыми sourceCardId и destinationCardId → 400 Bad Request
+     * {
+     *   "error": "Bad Request",
+     *   "message": "Cannot transfer from card 123 to itself"
+     * }
+     * </pre>
+     * @see SameCardTransferException
+     * @see HttpStatus#BAD_REQUEST
+     */
     @ExceptionHandler({SameCardTransferException.class})
     public ResponseEntity<ErrorResponse> handleSameCardTransferException(SameCardTransferException ex,
                                                                          HttpServletRequest request) {
@@ -478,6 +594,87 @@ public class GlobalExceptionHandler {
                 .path(getCurrentPath(request))
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+    /**
+     * Обрабатывает исключения, возникающие при шифровании данных.
+     * <p>
+     * Данный обработчик вызывается при ошибках в процессе шифрования конфиденциальных данных,
+     * таких как номера банковских карт. Ошибки шифрования могут возникать по следующим причинам:
+     * <ul>
+     *   <li>Неверный или поврежденный ключ шифрования</li>
+     *   <li>Проблемы с алгоритмом шифрования</li>
+     *   <li>Некорректные входные данные для шифрования</li>
+     *   <li>Внутренние ошибки криптографической библиотеки</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Важно:</strong> Подробности ошибки логируются на сервере, но клиенту возвращается
+     * обобщенное сообщение без технических деталей для обеспечения безопасности.
+     * </p>
+     *
+     * @param ex      исключение типа {@link EncryptionException}, содержащее информацию об ошибке шифрования
+     * @param request HTTP запрос, в процессе обработки которого возникла ошибка
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 500 (Internal Server Error)
+     *
+     * @see EncryptionException
+     * @see HttpStatus#INTERNAL_SERVER_ERROR
+     * @see com.example.bankcards.util.EncryptionService#encrypt(String)
+     */
+    @ExceptionHandler(EncryptionException.class)
+    public ResponseEntity<ErrorResponse>handleEncryptionException(EncryptionException ex,
+                                                                  HttpServletRequest request){
+        log.error("Encryption error: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("Failed to encrypt sensitive data")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+    /**
+     * Обрабатывает исключения, возникающие при дешифровании данных.
+     * <p>
+     * Данный обработчик вызывается при ошибках в процессе дешифрования конфиденциальных данных,
+     * например, при получении баланса карты или просмотре деталей карты. Ошибки дешифрования
+     * могут возникать по следующим причинам:
+     * <ul>
+     *   <li>Неверный или поврежденный ключ шифрования</li>
+     *   <li>Попытка дешифровать поврежденные или некорректные данные</li>
+     *   <li>Несоответствие алгоритма шифрования</li>
+     *   <li>Внутренние ошибки криптографической библиотеки</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Важно:</strong> Подробности ошибки логируются на сервере, но клиенту возвращается
+     * обобщенное сообщение без технических деталей для обеспечения безопасности. В некоторых случаях
+     * ошибка дешифрования может указывать на повреждение данных в базе, что требует вмешательства
+     * администратора.
+     * </p>
+     *
+     * @param ex      исключение типа {@link DecryptedException}, содержащее информацию об ошибке дешифрования
+     * @param request HTTP запрос, в процессе обработки которого возникла ошибка
+     * @return {@link ResponseEntity} с {@link ErrorResponse} и HTTP статусом 500 (Internal Server Error)
+
+     * @see DecryptedException
+     * @see HttpStatus#INTERNAL_SERVER_ERROR
+     * @see com.example.bankcards.util.EncryptionService#decrypt(String)
+     */
+    @ExceptionHandler(DecryptedException.class)
+    public ResponseEntity<ErrorResponse>handleDecryptionException(DecryptedException ex,
+                                                                  HttpServletRequest request){
+        log.error("Decryption error: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("Failed to decrypt sensitive data")
+                .message(ex.getMessage())
+                .path(getCurrentPath(request))
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
     /**

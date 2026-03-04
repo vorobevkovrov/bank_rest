@@ -18,7 +18,6 @@ public record RegisterRequest(@NotBlank(message = "Username is required")
                                               " one lowercase and one uppercase letter")
                               String password,
                               Role role) {
-    //TODO may be deleted
     public void setRole(Role role) {
     }
 }

@@ -1,8 +1,8 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String resourceName) {
-        super(String.format("%s ",
+        super(String.format("%s",
                 resourceName));
     }
 }

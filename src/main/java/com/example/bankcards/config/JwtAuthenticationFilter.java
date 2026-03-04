@@ -1,6 +1,6 @@
 package com.example.bankcards.config;
 
-import com.example.bankcards.exception.ErrorResponse;
+import com.example.bankcards.exception.exceptions.ErrorResponse;
 import com.example.bankcards.security.UserDetailsServiceImpl;
 import com.example.bankcards.util.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;

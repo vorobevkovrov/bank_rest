@@ -1,4 +1,4 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.exception.exceptions;
 
 public class MissingAuthorizationHeaderException extends RuntimeException {
     public MissingAuthorizationHeaderException(String message) {
