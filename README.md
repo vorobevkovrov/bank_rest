@@ -163,7 +163,7 @@ mvn spring-boot:run
 docker-compose up --build
 ```
 
-### Остановка контейнера
+#### Остановка контейнера
 
 ```bash
 docker-compose down
