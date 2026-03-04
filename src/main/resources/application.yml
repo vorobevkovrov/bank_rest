@@ -52,13 +52,6 @@ security:
   user-default-password: ${USER_DEFAULT_PASSWORD}
 
 # Настройки Swagger/OpenAPI
-#springdoc:
-#  api-docs:
-#   path: /api-docs
-#  swagger-ui:
-#    path: /swagger-ui.html
-#    enabled: ${SWAGGER_ENABLED}
-#  packages-to-scan: com.bank.controller
 springdoc:
   api-docs:
     path: /api-docs
