@@ -1,9 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/migration/001-initial-schema.yml
-  - include:
-      file: db/changelog/migration/002-create-admin-user.yml
-  - include:
-      file: db/changelog/migration/003-update-table-transactions.yml
-  - include:
-      file: db/changelog/migration/004-create-card-requests-table.yaml
