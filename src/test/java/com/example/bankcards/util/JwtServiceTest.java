@@ -32,8 +32,8 @@ class JwtServiceTest {
 
     private final String SECRET_KEY = "mySuperSecretKeyForJWTGenerationThatIsAtLeast32BytesLongForHS256";
     private final String BASE64_SECRET = Base64.getEncoder().encodeToString(SECRET_KEY.getBytes());
-    private final long JWT_EXPIRATION = 3600000; // 1 hour
-    private final long REFRESH_EXPIRATION = 86400000; // 24 hours
+    private final long JWT_EXPIRATION = 3600000;
+    private final long REFRESH_EXPIRATION = 86400000;
 
     private User testUser;
     private UserDetails userDetails;
@@ -43,8 +43,6 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         jwtService = new JwtService();
-
-        // Set properties using ReflectionTestUtils
         ReflectionTestUtils.setField(jwtService, "secretKey", BASE64_SECRET);
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", JWT_EXPIRATION);
         ReflectionTestUtils.setField(jwtService, "refreshExpiration", REFRESH_EXPIRATION);
@@ -108,7 +106,7 @@ class JwtServiceTest {
         void generateToken_HasIssuedAt() {
             // Act
             String token = jwtService.generateToken(testUser);
-            Date issuedAt = extractClaims(token).getIssuedAt(); // или ваш метод экстракции
+            Date issuedAt = extractClaims(token).getIssuedAt();
 
             // Assert
             // Проверяем, что время создания токена отличается от текущего не более чем на 1 секунду
@@ -325,8 +323,6 @@ class JwtServiceTest {
             // 4. Проверяем, что метод вернул false (так как исключение поймано внутри сервиса)
             assertFalse(jwtService.isTokenValid(token, userDetails), "Token should be invalid after expiration");
         }
-
-
 
 
         @Test
