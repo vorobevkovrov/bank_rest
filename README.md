@@ -91,7 +91,13 @@ CREATE DATABASE bank_rest_local
 ```sql
 \q
 ```
+## :package: Склонируйте репозиторий  
+Откройте терминал и перейдите в папку, куда хотите скачать проект.
 
+Введите команду
+```bash
+git clone https://github.com/vorobevkovrov/bank_rest
+```
 ## ⚙️ Конфигурация приложения
 
 ### Настройка переменных окружения
